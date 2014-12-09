@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Aria Templates</title>
+		<script type="text/javascript" src="../../aria/ariatemplates-1.6.8.js"></script>
+	</head>
+<body>
+	<div id="main"></div>
+	<script type="text/javascript">
+		Aria.loadTemplate({
+  			classpath: "examples.automatic_refresh.MyTemplate",
+  			div: "main",
+  			data: {
+  				teams: [{
+      				name: "England",
+      				score: 0
+    			},
+    			{
+    				name: "France",
+    				score: 0
+    			}]
+			}
+		});
+	</script>
+</body>
+</html>
