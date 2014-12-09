@@ -1,0 +1,9 @@
+{Library {
+    $classpath: "examples.macro_libraries.Lib1"
+}}
+
+	{macro sayHello(name)}
+		Hello, ${name}!
+	{/macro}
+
+{/Library}

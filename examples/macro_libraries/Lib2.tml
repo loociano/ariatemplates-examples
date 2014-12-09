@@ -1,0 +1,10 @@
+{Library {
+    $classpath: "examples.macro_libraries.Lib2",
+    $hasScript : true
+}}
+
+	{macro shoutHello(name)}
+		Hello, ${shout(name)}!
+	{/macro}
+
+{/Library}
