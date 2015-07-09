@@ -5,7 +5,7 @@
     	libTwo: "examples.macro_libraries.Lib2"
     }
 }}
-	{var name = "Miles" /}
+	{var name = "Luciano" /}
 
     {macro main()}
 		{call libOne.sayHello(name) /} <br/>

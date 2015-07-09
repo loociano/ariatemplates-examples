@@ -3,7 +3,7 @@
 }}
 
 	{macro sayHello(name)}
-		Hello, ${name}!
+		Library1 says: Hello, ${name}!
 	{/macro}
 
 {/Library}

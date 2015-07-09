@@ -4,7 +4,7 @@
 }}
 
 	{macro shoutHello(name)}
-		Hello, ${shout(name)}!
+		Library2 says: Hello, ${shout(name)}!
 	{/macro}
 
 {/Library}
