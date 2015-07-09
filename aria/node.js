@@ -1,0 +1,1384 @@
+/*
+ * Aria Templates 1.7.8 - 08 Jun 2015
+ *
+ * Copyright 2009-2015 Amadeus s.a.s.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*jshint undef:true, node:true, -W069, -W055*/
+module.exports = function(packagedConfig) {
+    "use strict";
+    var type$module, nextTick$module, uncaughtError$module, asyncCall$module, bind$module, promise$module, findRequires$module, scriptBaseUrl$module, request$module, eval$module, packagedConfig$module, noderError$module, jsEval$module, findInMap$module, path$module, filters$module, merge$module, loader$module, loader$module2, resolver$module, execScripts$module, context$module, defaultConfig$module, main$module;
+        (function() {
+        var toString = Object.prototype.toString;
+        var isString = function(str) {
+            return typeof str === "string" || toString.call(str) === "[object String]";
+        };
+        var isArray = Array.isArray || function(obj) {
+            return toString.call(obj) === "[object Array]";
+        };
+        var isFunction = function(fn) {
+            return typeof fn == "function";
+        };
+        var isObject = function(obj) {
+            return obj && typeof obj == "object";
+        };
+        var isPlainObject = function(obj) {
+            return obj ? toString.call(obj) === "[object Object]" : false;
+        };
+        type$module = {
+            isFunction: isFunction,
+            isArray: isArray,
+            isString: isString,
+            isObject: isObject,
+            isPlainObject: isPlainObject
+        };
+    })();
+    /*global process:true */
+    nextTick$module = process.nextTick;
+    uncaughtError$module = function(e) {
+        /*nextTick*/ nextTick$module(function() {
+            if (e.logDetails) {
+                e.logDetails();
+            }
+            throw e;
+        });
+    };
+        (function() {
+        var handlers = [];
+        var insideSyncTick = false;
+        var syncCall = function(method) {
+            try {
+                method();
+            } catch (e) {
+                /*uncaughtError*/ uncaughtError$module(e);
+            }
+        };
+        var syncCalls = function(callbacks) {
+            while (callbacks.length > 0) {
+                syncCall(callbacks.shift());
+            }
+        };
+        var syncTick = function() {
+            insideSyncTick = true;
+            try {
+                syncCalls(handlers);
+            } finally {
+                insideSyncTick = false;
+            }
+        };
+        var improvedNextTick = function(fn) {
+            if (handlers.length === 0 && !insideSyncTick) {
+                /*nextTick*/ nextTick$module(syncTick);
+            }
+            handlers.push(fn);
+        };
+        asyncCall$module = {
+            syncTick: syncTick,
+            nextTick: improvedNextTick,
+            nextTickCalls: function(callbacks) {
+                if (callbacks && callbacks.length > 0) {
+                    improvedNextTick(function() {
+                        syncCalls(callbacks);
+                    });
+                }
+            },
+            syncCalls: syncCalls,
+            syncCall: syncCall
+        };
+    })();
+    bind$module = function(fn, scope, paramBind) {
+        return function(param) {
+            return fn.call(scope, paramBind, param);
+        };
+    };
+        (function() {
+        var isFunction = /*typeUtils*/ type$module.isFunction;
+        var isObject = /*typeUtils*/ type$module.isObject;
+        var wrapResolutionFn = function(resFn, promiseError) {
+            var called;
+            var checkCalls = function(fn, value) {
+                if (!called) {
+                    called = true;
+                    fn(value);
+                }
+            };
+            return [ /*bind1*/ bind$module(checkCalls, null, function(value) {
+                if (promiseError && value === promiseError) {
+                    resFn[1](new TypeError());
+                    return;
+                }
+                chainAnswer(value, resFn);
+            }), /*bind1*/ bind$module(checkCalls, null, resFn[1]) ];
+        };
+        var chainAnswer = function(value, resFn) {
+            try {
+                if (isFunction(value) || isObject(value)) {
+                    var then = value.thenSync || value.then;
+                    if (isFunction(then)) {
+                        resFn = wrapResolutionFn(resFn);
+                        then.call(value, resFn[0], resFn[1]);
+                        return;
+                    }
+                }
+                resFn[0](value);
+            } catch (ex) {
+                resFn[1](ex);
+            }
+        };
+        var Promise = function(callback) {
+            var promise = this;
+            var state;
+            // undefined = pending, 1 fulfilled, 2 rejected
+            var result;
+            var listeners = [];
+            var createThen = function(sync, callFunction) {
+                promise["then" + sync] = function(onFulfilled, onRejected) {
+                    onFulfilled = isFunction(onFulfilled) ? onFulfilled : null;
+                    onRejected = isFunction(onRejected) ? onRejected : null;
+                    if (!onFulfilled && !onRejected) {
+                        return promise;
+                    }
+                    return new Promise(function(fulfill, reject) {
+                        var callback = function() {
+                            var fn = state == 1 ? onFulfilled : onRejected;
+                            if (fn) {
+                                try {
+                                    fulfill(fn(result));
+                                } catch (e) {
+                                    reject(e);
+                                }
+                            } else {
+                                (state == 1 ? fulfill : reject)(result);
+                            }
+                        };
+                        if (listeners) {
+                            listeners.push(callback);
+                        } else {
+                            callFunction(callback);
+                        }
+                    });
+                };
+            };
+            createThen("", /*asyncCall*/ asyncCall$module.nextTick);
+            createThen("Sync", /*asyncCall*/ asyncCall$module.syncCall);
+            var isX = function(refState) {
+                return state == refState;
+            };
+            promise.isFulfilled = /*bind1*/ bind$module(isX, null, 1);
+            promise.isRejected = /*bind1*/ bind$module(isX, null, 2);
+            promise.result = function() {
+                return result;
+            };
+            var resolve = function(newState, value) {
+                if (listeners) {
+                    result = value;
+                    state = newState;
+                    var myListeners = listeners;
+                    listeners = null;
+                    /*asyncCall*/ asyncCall$module.nextTickCalls(myListeners);
+                }
+            };
+            var resFn = [ /*bind1*/ bind$module(resolve, null, 1), /*bind1*/ bind$module(resolve, null, 2) ];
+            resFn = wrapResolutionFn(resFn, promise);
+            try {
+                callback(resFn[0], resFn[1]);
+            } catch (e) {
+                resFn[1](e);
+            }
+        };
+        Promise.resolve = function(value) {
+            if (value instanceof Promise) {
+                return value;
+            }
+            return new Promise(function(fulfill) {
+                fulfill(value);
+            });
+        };
+        Promise.reject = function(reason) {
+            return new Promise(function(fulfill, reject) {
+                reject(reason);
+            });
+        };
+        Promise.defer = function() {
+            var res = {};
+            res.promise = new Promise(function(fulfill, reject) {
+                res.resolve = fulfill;
+                res.reject = reject;
+            });
+            return res;
+        };
+        Promise.done = Promise.resolve();
+        var promiseProto = Promise.prototype = {};
+        var wrapForSpread = function(onFulfilled, res) {
+            return onFulfilled.apply(null, res);
+        };
+        var createProtoMethods = function(sync) {
+            var thenSync = "then" + sync;
+            promiseProto["spread" + sync] = function(onFulfilled, onRejected) {
+                /*bind1*/
+                return this[thenSync](bind$module(wrapForSpread, null, onFulfilled), onRejected);
+            };
+            promiseProto["catch" + sync] = function(onRejected) {
+                return this[thenSync](null, onRejected);
+            };
+            promiseProto["finally" + sync] = function(handler) {
+                return this[thenSync](handler, handler);
+            };
+            promiseProto["done" + sync] = function(onFulfilled, onRejected) {
+                this[thenSync](onFulfilled, onRejected).thenSync(null, /*uncaughtError*/ uncaughtError$module);
+            };
+        };
+        createProtoMethods("");
+        createProtoMethods("Sync");
+        var createAll = function(failFast) {
+            return function(array) {
+                return new Promise(function(fulfill, reject) {
+                    if (array.length === 0) {
+                        return fulfill([]);
+                    }
+                    array = array.slice(0);
+                    // make a copy of the array (to be able to change it)
+                    var globalOk = true;
+                    var globalResult = array;
+                    var remainingPromisesCount = array.length;
+                    var handler = function(success, result) {
+                        array[this[0]] = result;
+                        if (globalOk && !success) {
+                            globalOk = false;
+                            globalResult = result;
+                            if (failFast) {
+                                remainingPromisesCount = 1;
+                            }
+                        }
+                        remainingPromisesCount--;
+                        if (!remainingPromisesCount) {
+                            (globalOk ? fulfill : reject).call(null, globalResult);
+                        }
+                    };
+                    for (var i = remainingPromisesCount - 1; i >= 0; i--) {
+                        var scope = [ i ];
+                        chainAnswer(array[i], [ /*bind1*/ bind$module(handler, scope, true), /*bind1*/ bind$module(handler, scope, false) ]);
+                    }
+                });
+            };
+        };
+        Promise.all = createAll(true);
+        Promise.allSettled = createAll(false);
+        promise$module = Promise;
+    })();
+        (function() {
+        var splitRegExp = /(?=[\/'"]|\brequire\s*\()/;
+        var requireRegExp = /^require\s*\(\s*$/;
+        var endOfLineRegExp = /[\r\n]/;
+        var quoteRegExp = /^['"]$/;
+        var operatorRegExp = /^(\w{2,}|[!%&\(*+,\-\/:;<=>?\[\^])$/;
+        var firstNonSpaceCharRegExp = /^\s*(\S)/;
+        var lastNonSpaceCharRegExp = /(\b(return|throw|new|in)|\S)\s*$/;
+        var pluginBeginRegExp = /\s*\)\s*\.\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\s*\(\s*(?=(.?))/g;
+        var pluginParamRegExp = /[_$a-zA-Z][_$a-zA-Z0-9]*/g;
+        var pluginParamSepRegExp = /\s*(\)|,)\s*/g;
+        var isEscaped = function(string) {
+            var escaped = false;
+            var index = string.length - 1;
+            while (index >= 0 && string.charAt(index) == "\\") {
+                index--;
+                escaped = !escaped;
+            }
+            return escaped;
+        };
+        var getLastNonSpaceChar = function(array, i) {
+            for (;i >= 0; i--) {
+                var curItem = array[i];
+                if (lastNonSpaceCharRegExp.test(curItem)) {
+                    return RegExp.$1;
+                }
+            }
+            return "";
+        };
+        var checkRequireScope = function(array, i) {
+            return i === 0 || getLastNonSpaceChar(array, i - 1) != ".";
+        };
+        var isRegExp = function(array, i) {
+            return i === 0 || operatorRegExp.test(getLastNonSpaceChar(array, i - 1));
+        };
+        var findEndOfStringOrRegExp = function(array, i) {
+            var expectedEnd = array[i].charAt(0);
+            i++;
+            for (var l = array.length; i < l; i++) {
+                var item = array[i].charAt(0);
+                if (item === expectedEnd) {
+                    if (!isEscaped(array[i - 1])) {
+                        break;
+                    }
+                }
+            }
+            // here, if i == l, the string or regexp has no end (which is not correct in JS...)
+            return i;
+        };
+        var findEndOfSlashComment = function(array, beginIndex) {
+            for (var i = beginIndex + 1, l = array.length; i < l; i++) {
+                var curItem = array[i];
+                var index = curItem.search(endOfLineRegExp);
+                if (index > -1) {
+                    array[i] = curItem.substring(index);
+                    break;
+                }
+            }
+            array.splice(beginIndex, i - beginIndex);
+            return beginIndex;
+        };
+        var findEndOfStarComment = function(array, beginIndex) {
+            var i = beginIndex + 1;
+            if (array[beginIndex] == "/*") {
+                i++;
+            }
+            var curItem = array[i - 1];
+            for (var l = array.length; i < l; i++) {
+                var prevItem = curItem;
+                curItem = array[i];
+                if (prevItem.charAt(prevItem.length - 1) == "*" && curItem.charAt(0) == "/") {
+                    array[i] = curItem.substring(1);
+                    break;
+                }
+            }
+            // here, if i == l, the comment has no end (which is not correct in JS...)
+            array.splice(beginIndex, i - beginIndex);
+            return beginIndex;
+        };
+        var parseSource = function(source) {
+            var stringsPositions = [];
+            var requireStrings = [];
+            var i = 0;
+            var array = source.split(splitRegExp);
+            var l = array.length;
+            /*
+     * inRequireState variable:
+     * 0 : outside of any useful require
+     * 1 : just reached require
+     * 2 : looking for the string
+     * 3 : just reached the string
+     * 4 : looking for closing parenthesis
+     */
+            var inRequireState = -1;
+            for (;i < l && i >= 0; i++) {
+                var curItem = array[i];
+                var firstChar = curItem.charAt(0);
+                if (firstChar == "/") {
+                    // it may be a comment, a division or a regular expression
+                    if (curItem == "/" && i + 1 < l && array[i + 1].charAt(0) == "/") {
+                        i = findEndOfSlashComment(array, i);
+                        l = array.length;
+                    } else if (curItem.charAt(1) == "*") {
+                        i = findEndOfStarComment(array, i);
+                        l = array.length;
+                    } else if (isRegExp(array, i)) {
+                        i = findEndOfStringOrRegExp(array, i);
+                    }
+                } else if (quoteRegExp.test(firstChar)) {
+                    var beginString = i;
+                    i = findEndOfStringOrRegExp(array, i);
+                    stringsPositions.push([ beginString, i ]);
+                    if (inRequireState == 2) {
+                        inRequireState = 3;
+                    }
+                } else if (firstChar == "r") {
+                    if (requireRegExp.test(curItem) && checkRequireScope(array, i)) {
+                        inRequireState = 1;
+                    }
+                }
+                if (inRequireState > 0) {
+                    if (inRequireState == 1) {
+                        inRequireState = 2;
+                    } else {
+                        curItem = array[i];
+                        if (inRequireState == 3) {
+                            curItem = curItem.substring(1);
+                            inRequireState = 4;
+                        }
+                        if (firstNonSpaceCharRegExp.test(curItem)) {
+                            if (inRequireState == 4 && RegExp.$1 == ")") {
+                                // the last string is the parameter of require
+                                requireStrings.push(stringsPositions.length - 1);
+                            }
+                            inRequireState = 0;
+                        }
+                    }
+                }
+            }
+            return [ array, stringsPositions, requireStrings ];
+        };
+        var createPositionsConverter = function(array) {
+            var positions = [ 0 ];
+            for (var i = 1, l = array.length; i <= l; i++) {
+                positions[i] = positions[i - 1] + array[i - 1].length;
+            }
+            return function(pos) {
+                return [ positions[pos[0]] + 1, positions[pos[1]] ];
+            };
+        };
+        var getString = function(source, position) {
+            // TODO: replace special chars: \n \t \\ ...
+            return source.substring.apply(source, position);
+        };
+        var regExpExecPosition = function(regExp, source, index) {
+            regExp.lastIndex = index;
+            var match = regExp.exec(source);
+            if (match && match.index == index) {
+                return match;
+            }
+        };
+        var isPlugin = /(^|\/)\$[^\/]*$/;
+        findRequires$module = function(source, includePlugins) {
+            var parseInfo = parseSource(source);
+            var requireStrings = parseInfo[2];
+            var requireStringsLength = requireStrings.length;
+            var depMap = {};
+            var res = [];
+            if (requireStrings.length) {
+                var posConverter = createPositionsConverter(parseInfo[0]);
+                var stripComment = parseInfo[0].join("");
+                var stringsPositions = parseInfo[1];
+                var nbStrings = stringsPositions.length;
+                for (var i = 0; i < requireStringsLength; i++) {
+                    var strIndex = requireStrings[i];
+                    var strPos = posConverter(stringsPositions[strIndex]);
+                    var curItem = getString(stripComment, strPos);
+                    // don't add the dependency more than once
+                    if (!depMap[curItem]) {
+                        res.push(curItem);
+                        depMap[curItem] = true;
+                    }
+                    if (includePlugins && isPlugin.test(curItem)) {
+                        var match = regExpExecPosition(pluginBeginRegExp, stripComment, strPos[1] + 1);
+                        if (match) {
+                            var method = match[1];
+                            var args = [];
+                            var nextString = ++strIndex < nbStrings && posConverter(stringsPositions[strIndex]);
+                            match[1] = match[2];
+                            while (match && match[1] != ")") {
+                                var curPos = match.index + match[0].length;
+                                if (nextString && curPos + 1 === nextString[0]) {
+                                    args.push(getString(stripComment, nextString));
+                                    curPos = nextString[1] + 1;
+                                    nextString = ++strIndex < nbStrings && posConverter(stringsPositions[strIndex]);
+                                } else {
+                                    match = regExpExecPosition(pluginParamRegExp, stripComment, curPos);
+                                    if (!match) {
+                                        break;
+                                    }
+                                    curPos = pluginParamRegExp.lastIndex;
+                                    args.push([ match[0] ]);
+                                }
+                                match = regExpExecPosition(pluginParamSepRegExp, stripComment, curPos);
+                            }
+                            if (match) {
+                                // this means the call is properly finished with a closing parenthesis
+                                res.push({
+                                    module: curItem,
+                                    method: method,
+                                    args: args
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            return res;
+        };
+    })();
+    scriptBaseUrl$module = function() {
+        return __dirname + "/";
+    };
+        (function() {
+        var fs = require("fs");
+        var readFileSync = function(file, encoding, callback) {
+            try {
+                callback(null, fs.readFileSync(file, encoding));
+            } catch (e) {
+                callback(e);
+            }
+        };
+        request$module = function(url, options) {
+            /*Promise*/
+            return new promise$module(function(fulfill, reject) {
+                var readFile = options && options.sync ? readFileSync : fs.readFile;
+                readFile(url, "utf-8", function(err, data) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        fulfill({
+                            responseText: data
+                        });
+                    }
+                });
+            });
+        };
+    })();
+    eval$module = require("vm").runInThisContext;
+    packagedConfig$module = packagedConfig;
+        (function() {
+        var errorNb = 0;
+        var logDetails = function() {
+            var async = false;
+            var self = this;
+            var res = getHandler().thenSync(function(syncLogDetails) {
+                return syncLogDetails(self, async);
+            });
+            async = true;
+            return res;
+        };
+        var handlerPromise;
+        var getHandler = function() {
+            if (!handlerPromise) {
+                var errorConfig = packagedConfig$module().errorContext;
+                var loadingContext = new /*Context*/ context$module(errorConfig);
+                handlerPromise = loadingContext.moduleExecute(loadingContext.getModule(errorConfig.main));
+            }
+            return handlerPromise;
+        };
+        var createError = function(code, args, cause) {
+            var id = ++errorNb;
+            var error = new Error("NoderError #" + id + ": " + code);
+            error.name = "NoderError";
+            error.id = id;
+            error.code = code;
+            error.args = args;
+            error.cause = cause;
+            error.logDetails = logDetails;
+            return error;
+        };
+        noderError$module = createError;
+    })();
+    jsEval$module = function(jsCode, url, prefix, suffix) {
+        try {
+            /*exec*/
+            return eval$module((prefix || "") + jsCode + (suffix || ""), url);
+        } catch (error) {
+            /*noderError*/
+            throw noderError$module("jsEval", [ jsCode, url, prefix, suffix ], error);
+        }
+    };
+        (function() {
+        var isPlainObject = type$module.isPlainObject;
+        findInMap$module = function(map, terms, defaultValue) {
+            if (!map) {
+                return defaultValue;
+            }
+            defaultValue = map["**"] || defaultValue;
+            for (var i = 0, l = terms.length; i < l; i++) {
+                var curTerm = terms[i];
+                var value = map[curTerm];
+                if (!value) {
+                    return map["*"] || map["**"] || defaultValue;
+                } else if (!isPlainObject(value)) {
+                    return value;
+                }
+                defaultValue = map["**"] || defaultValue;
+                map = value;
+            }
+            return map["."] || map["*"] || map["**"] || defaultValue;
+        };
+    })();
+        (function() {
+        var split = function(name) {
+            if (!name.length) {
+                return [];
+            } else {
+                return name.split("/");
+            }
+        };
+        var dirname = function(name) {
+            var array = split(name);
+            array.pop();
+            return array.join("/");
+        };
+        path$module = {
+            split: split,
+            dirname: dirname
+        };
+    })();
+    filters$module = function(context, filterConfig, filename, args) {
+        var items = (filterConfig || []).slice(0);
+        var next = function(content) {
+            args[0] = content;
+            if (!items.length) {
+                /*Promise*/
+                return promise$module.resolve(content);
+            }
+            var currentFilter = items.shift();
+            if (currentFilter.pattern && currentFilter.pattern.test(filename)) {
+                return context.moduleAsyncRequire(context.rootModule, [ currentFilter.module ]).spreadSync(function(processor) {
+                    /*Promise*/
+                    return promise$module.resolve(processor.apply(null, args.concat(currentFilter.options))).thenSync(next);
+                });
+            } else {
+                return next(args[0]);
+            }
+        };
+        return next(args[0]);
+    };
+        (function() {
+        var merge = function(dst, src, rec) {
+            for (var key in src) {
+                if (src.hasOwnProperty(key)) {
+                    var srcValue = src[key];
+                    var dstValue;
+                    if (rec && /*typeUtils*/ type$module.isPlainObject(srcValue) && /*typeUtils*/ type$module.isPlainObject(dstValue = dst[key])) {
+                        merge(dstValue, srcValue, rec);
+                    } else {
+                        dst[key] = srcValue;
+                    }
+                }
+            }
+        };
+        merge$module = merge;
+    })();
+        (function() {
+        var split = path$module.split;
+        var emptyObject = {};
+        var xhrContent = function(xhr) {
+            return xhr.responseText;
+        };
+        var Loader = function(context) {
+            var config = context.config.packaging || emptyObject;
+            this.config = config;
+            this.baseUrl = (config.baseUrl || "").replace(/^%scriptdir%\//, /*scriptBaseUrl*/ scriptBaseUrl$module());
+            this.context = context;
+            this.currentLoads = {};
+            var bootstrap = config.bootstrap;
+            if (bootstrap) {
+                bootstrap(context.define);
+            }
+        };
+        var loaderProto = Loader.prototype = {};
+        loaderProto.moduleLoad = function(module) {
+            var moduleName = module.filename;
+            var packageName;
+            var packagesMap = this.config.packagesMap;
+            if (packagesMap) {
+                var splitModuleName = split(moduleName);
+                packageName = /*findInMap*/ findInMap$module(packagesMap || emptyObject, splitModuleName, null);
+            }
+            if (packageName) {
+                return this.loadPackaged(packageName);
+            } else {
+                return this.loadUnpackaged(module);
+            }
+        };
+        loaderProto.loadUnpackaged = function(module) {
+            module.url = this.baseUrl + module.filename;
+            /*request*/
+            /*bind1*/
+            return request$module(module.url, this.config.requestConfig).thenSync(xhrContent).thenSync(bind$module(this.preprocessUnpackaged, this, module));
+        };
+        loaderProto.preprocessUnpackaged = function(module, code) {
+            var preprocessors = this.config.preprocessors;
+            if (!preprocessors || !preprocessors.length) {
+                return this.defineUnpackaged(module, code);
+            } else {
+                /*filters*/
+                /*bind1*/
+                return filters$module(this.context, preprocessors, module.filename, [ code, module.filename ]).thenSync(bind$module(this.defineUnpackaged, this, module));
+            }
+        };
+        loaderProto.defineUnpackaged = function(module, code) {
+            this.context.jsModuleDefine(code, module.filename, module.url);
+        };
+        loaderProto.loadPackaged = function(packageName) {
+            var self = this;
+            var url = self.baseUrl + packageName;
+            var res = self.currentLoads[url];
+            if (!res) {
+                self.currentLoads[url] = res = /*request*/ request$module(url, self.config.requestConfig).thenSync(xhrContent).thenSync(function(content) {
+                    var body = self.jsPackageEval(content, url);
+                    body(self.context.define);
+                });
+                // the following line must not be part of the previous promises chain because,
+                // in the synchronous case, self.currentLoads[url] must have already been assigned
+                // (and we should not add useless asynchronism in the chain)
+                res.finallySync(function() {
+                    delete self.currentLoads[url];
+                    self = null;
+                });
+            }
+            return res;
+        };
+        loaderProto.jsPackageEval = function(jsCode, url) {
+            /*jsEval*/
+            return jsEval$module(jsCode, url, "(function(define){\n", "\n})");
+        };
+        loaderProto.updatePackagesMap = function(newMap) {
+            var config = this.config;
+            if (config.packagesMap) {
+                /*merge*/ merge$module(config.packagesMap, newMap, true);
+            } else {
+                config.packagesMap = newMap;
+            }
+        };
+        loader$module = Loader;
+    })();
+        (function() {
+        var bind = function(fn, scope) {
+            return function() {
+                return fn.apply(scope, arguments);
+            };
+        };
+        var tplFileNameRegExp = /\.(tpl(\.css|\.txt)?|cml|tml)$/;
+        var oldATClassRegExp = /Aria\s*\.\s*(class|interface|bean|tplScript)Definition(s?)\s*\(/;
+        var Loader = function(context) {
+            var config = context.config.packaging || {};
+            var ariatemplates = config.ariatemplates;
+            if (!ariatemplates) {
+                /*ParentLoader*/
+                return new loader$module(context);
+            }
+            if (!context.config.packaging) {
+                context.config.packaging = config;
+            }
+            var Aria = global.Aria || {};
+            global.Aria = Aria;
+            if (Aria.rootFolderPath == null && config.baseUrl == null) {
+                var rootFolderPath = /*scriptBaseUrl*/ scriptBaseUrl$module();
+                rootFolderPath = rootFolderPath.replace(/\/aria(templates)?\/$/, "/");
+                Aria.rootFolderPath = config.baseUrl = rootFolderPath;
+            } else if (Aria.rootFolderPath == null) {
+                Aria.rootFolderPath = config.baseUrl;
+            } else if (config.baseUrl == null) {
+                config.baseUrl = Aria.rootFolderPath;
+            }
+            var preprocessors = config.preprocessors;
+            if (!preprocessors) {
+                config.preprocessors = preprocessors = [];
+            }
+            preprocessors.push({
+                pattern: tplFileNameRegExp,
+                module: "ariatemplates/core/loaders/GeneralTplPreprocessor"
+            });
+            this.parentLoader = new /*ParentLoader*/ loader$module(context);
+            this.parentLoadUnpackaged = bind(this.parentLoader.loadUnpackaged, this.parentLoader);
+            this.parentLoader.loadUnpackaged = bind(this.loadUnpackaged, this);
+            this.parentLoader.defineUnpackaged = bind(this.defineUnpackaged, this);
+            this.context = context;
+        };
+        var LoaderProto = Loader.prototype = {};
+        LoaderProto.moduleLoad = function(module) {
+            return this.parentLoader.moduleLoad(module);
+        };
+        LoaderProto.isDownloadMgrUsable = function() {
+            if (!this.downloadMgr) {
+                var context = this.context;
+                this.downloadMgr = context.getModule(context.moduleResolve(context.rootModule, /*downloadMgrPath*/ "ariatemplates/core/DownloadMgr"));
+            }
+            return this.downloadMgr.loaded;
+        };
+        LoaderProto.downloadModule = function(module) {
+            var self = this;
+            /*Promise*/
+            return new promise$module(function(resolve, reject) {
+                var logicalPath = module.filename;
+                var downloadMgr = self.downloadMgr.exports;
+                module.url = downloadMgr.resolveURL(logicalPath, true);
+                downloadMgr.loadFile(logicalPath, {
+                    scope: self,
+                    fn: function() {
+                        var fileContent = downloadMgr.getFileContent(logicalPath);
+                        if (fileContent == null) {
+                            reject(new Error("Error while downloading " + logicalPath));
+                        } else {
+                            resolve(fileContent);
+                        }
+                    }
+                });
+            });
+        };
+        // first entry point: if it is present, use the DownloadMgr to download files
+        LoaderProto.loadUnpackaged = function(module) {
+            if (this.isDownloadMgrUsable()) {
+                /*bind1*/
+                return this.downloadModule(module).thenSync(bind$module(this.parentLoader.preprocessUnpackaged, this.parentLoader, module));
+            } else {
+                return this.parentLoadUnpackaged(module);
+            }
+        };
+        // second entry point: process old AT classes if needed
+        LoaderProto.defineUnpackaged = function(module, fileContent) {
+            var context = this.context;
+            var dependencies = /*findRequires*/ findRequires$module(fileContent, true);
+            // classes containing require or without Aria.xDefinition are using the new syntax
+            var newSyntax = dependencies.length > 0 || !oldATClassRegExp.test(fileContent);
+            if (newSyntax) {
+                var definition = context.jsModuleEval(fileContent, module.url);
+                context.moduleDefine(module, dependencies, definition);
+                return;
+            }
+            // old syntax, let's delegate the work to the old loader
+            var oldATLoader = this.oldATLoader;
+            if (oldATLoader) {
+                return oldATLoader(module, fileContent);
+            } else {
+                var self = this;
+                return context.moduleAsyncRequire(context.rootModule, [ /*oldATLoaderPath*/ "ariatemplates/core/loaders/OldATLoader" ]).spreadSync(function(oldATLoader) {
+                    self.oldATLoader = oldATLoader;
+                    return oldATLoader(module, fileContent);
+                });
+            }
+        };
+        LoaderProto.updatePackagesMap = function(newMap) {
+            this.parentLoader.updatePackagesMap(newMap);
+        };
+        loader$module2 = Loader;
+    })();
+        (function() {
+        var isString = type$module.isString;
+        var split = /*path*/ path$module.split;
+        var emptyObject = {};
+        var addExtension = function(pathArray) {
+            var index = pathArray.length - 1;
+            var lastItem = pathArray[index];
+            if (lastItem.indexOf(".") == -1) {
+                pathArray[index] = lastItem + ".js";
+            }
+        };
+        var normalize = function(pathArray) {
+            for (var i = 0, l = pathArray.length; i < l; i++) {
+                var currentPart = pathArray[i];
+                if (!currentPart.length || currentPart == ".") {
+                    pathArray.splice(i, 1);
+                    i--;
+                    l--;
+                } else if (currentPart == ".." && i > 0 && pathArray[i - 1] != "..") {
+                    pathArray.splice(i - 1, 2);
+                    i -= 2;
+                    l -= 2;
+                }
+            }
+            return pathArray;
+        };
+        var applyChange = function(terms, item, index) {
+            var itemParts = split(item);
+            if (!itemParts[0].length) {
+                // item starts with /, replaces the whole terms
+                itemParts.shift();
+                itemParts.unshift(0, index + 1);
+            } else {
+                // item is relative
+                itemParts.unshift(index, 1);
+            }
+            terms.splice.apply(terms, itemParts);
+        };
+        /**
+ * Apply a module map iteration.
+ * @param {Object} map
+ * @param {Array} terms Note that this array is changed by this function.
+ * @return {Boolean}
+ */
+        var applyModuleMap = function(map, terms) {
+            for (var i = 0, l = terms.length; i < l; i++) {
+                var curTerm = terms[i];
+                map = map[curTerm];
+                if (!map || curTerm === map) {
+                    return false;
+                } else if (isString(map)) {
+                    applyChange(terms, map, i);
+                    return true;
+                }
+            }
+            // if we reach this place, it is a directory
+            applyChange(terms, map["."] || "index.js", terms.length);
+            return true;
+        };
+        var multipleApplyModuleMap = function(map, terms) {
+            var allValues = {};
+            // curValue can never be equal to ".", as it is always assigned after normalizing
+            var lastValue = ".";
+            normalize(terms);
+            var curValue = terms.join("/");
+            while (curValue !== lastValue) {
+                if (terms[0] == "..") {
+                    /*noderError*/
+                    throw noderError$module("resolverRoot", [ terms ]);
+                }
+                if (allValues[curValue]) {
+                    /*noderError*/
+                    throw noderError$module("resolverLoop", [ terms ]);
+                } else {
+                    allValues[curValue] = lastValue;
+                }
+                if (applyModuleMap(map, terms)) {
+                    normalize(terms);
+                }
+                lastValue = curValue;
+                curValue = terms.join("/");
+            }
+        };
+        var Resolver = function(context) {
+            this.config = context.config.resolver || emptyObject;
+            this.cache = {};
+        };
+        var resolverProto = Resolver.prototype = {};
+        resolverProto.moduleResolve = function(callerModule, calledModule) {
+            // Compute the configuration to apply to the caller module:
+            var callerModuleSplit = split(callerModule.filename);
+            var moduleMap = this.config["default"] || emptyObject;
+            var res = split(calledModule);
+            var firstPart = res[0];
+            if (firstPart === "." || firstPart === "..") {
+                callerModuleSplit.pop();
+                // keep only the directory
+                res = callerModuleSplit.concat(res);
+            }
+            multipleApplyModuleMap(moduleMap, res);
+            addExtension(res);
+            return res.join("/");
+        };
+        resolver$module = Resolver;
+    })();
+    execScripts$module = function() {};
+        (function() {
+        var dirname = path$module.dirname;
+        var bind = function(fn, scope) {
+            return function() {
+                return fn.apply(scope, arguments);
+            };
+        };
+        var createAsyncRequire = function(context) {
+            var create = function(module) {
+                var res = function() {
+                    return context.moduleAsyncRequire(module, arguments);
+                };
+                res.create = create;
+                return res;
+            };
+            return create;
+        };
+        var Module = function(context, filename) {
+            if (filename) {
+                this.dirname = dirname(filename);
+            } else {
+                this.dirname = filename = ".";
+            }
+            this[/*noderPropertiesKey*/ "noderInfo"] = {};
+            this.filename = filename;
+            this.id = filename;
+            this.require = /*bind1*/ bind$module(context.moduleRequire, context, this);
+            this.require.resolve = /*bind1*/ bind$module(context.moduleResolve, context, this);
+            this.require.cache = context.cache;
+            this.require.main = context.main;
+            this.preloaded = false;
+            this.loaded = false;
+            this.exports = {};
+        };
+        var getModuleProperty = function(module, property) {
+            /*noderPropertiesKey*/
+            return module["noderInfo"][property];
+        };
+        var setModuleProperty = function(module, property, value) {
+            module[/*noderPropertiesKey*/ "noderInfo"][property] = value;
+            return value;
+        };
+        var isModuleDefined = function(module) {
+            /*PROPERTY_DEFINITION*/
+            return module.loaded || getModuleProperty(module, "_0");
+        };
+        var start = function(context) {
+            var config = context.config;
+            var actions = /*Promise*/ promise$module.done;
+            var main = config.main;
+            actions = actions.thenSync(main ? function() {
+                var res = context.main = context.execModuleCall(main);
+                return res;
+            } : function() {});
+            actions = actions.thenSync(config.onstart);
+            var scriptsType = config.scriptsType;
+            if (scriptsType) {
+                actions = actions.thenSync(function() {
+                    /*execScripts*/
+                    return execScripts$module(context, scriptsType);
+                });
+            }
+            return actions;
+        };
+        var BuiltinModules = function() {};
+        var createInstance = function(configConstructor, defaultConstructor, param) {
+            var Constructor = configConstructor || defaultConstructor;
+            return new Constructor(param, defaultConstructor);
+        };
+        var Context = function(config) {
+            config = config || {};
+            this.config = config;
+            this.cache = {};
+            this.builtinModules = new BuiltinModules();
+            this.allSettled = config.failFast === false ? /*Promise*/ promise$module.allSettled : /*Promise*/ promise$module.all;
+            var rootModule = new Module(this);
+            rootModule.preloaded = true;
+            rootModule.loaded = true;
+            rootModule.define = this.define = bind(this.define, this);
+            rootModule.asyncRequire = createAsyncRequire(this)(rootModule);
+            rootModule.execute = bind(this.jsModuleExecute, this);
+            rootModule.createContext = Context.createContext;
+            this.rootModule = rootModule;
+            this.resolver = createInstance(config.Resolver, /*Resolver*/ resolver$module, this);
+            this.loader = createInstance(config.Loader, /*Loader*/ loader$module2, this);
+            rootModule.updatePackagesMap = bind(this.loader.updatePackagesMap, this.loader);
+            var globalVarName = config.varName;
+            if (globalVarName) {
+                global[globalVarName] = rootModule;
+            }
+            start(this).done();
+        };
+        var contextProto = Context.prototype = {};
+        var checkCircularDependency = function(module, lookInside) {
+            if (lookInside === module) {
+                return true;
+            }
+            var parents = getModuleProperty(lookInside, /*PROPERTY_PRELOADING_PARENTS*/ "_3");
+            if (parents) {
+                for (var i = 0; parents[i]; i++) {
+                    if (checkCircularDependency(module, parents[i])) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+        // Preloading a module means making it ready to be executed (loading its definition and preloading its
+        // dependencies)
+        contextProto.modulePreload = function(module, parent) {
+            if (module.preloaded) {
+                /*Promise*/
+                return promise$module.done;
+            }
+            var preloading = getModuleProperty(module, /*PROPERTY_PRELOADING*/ "preloading");
+            var preloadingParents = getModuleProperty(module, /*PROPERTY_PRELOADING_PARENTS*/ "_3");
+            if (preloading || preloadingParents) {
+                // If we get here, it may be because of a circular dependency
+                if (parent) {
+                    if (checkCircularDependency(module, parent)) {
+                        /*Promise*/
+                        return promise$module.done;
+                    }
+                    preloadingParents.push(parent);
+                }
+                if (!preloading) {
+                    /*noderError*/
+                    throw noderError$module("modulePreloadRec", [ module ]);
+                }
+                return preloading;
+            }
+            var self = this;
+            setModuleProperty(module, /*PROPERTY_PRELOADING_PARENTS*/ "_3", parent ? [ parent ] : []);
+            /*PROPERTY_PRELOADING*/
+            return setModuleProperty(module, "preloading", self.moduleLoadDefinition(module).thenSync(function() {
+                /*PROPERTY_DEPENDENCIES*/
+                return self.modulePreloadDependencies(module, getModuleProperty(module, "dependencies"));
+            }).thenSync(function() {
+                module.preloaded = true;
+                setModuleProperty(module, /*PROPERTY_PRELOADING_PARENTS*/ "_3", null);
+            }, function(error) {
+                /*noderError*/
+                throw noderError$module("modulePreload", [ module ], error);
+            }));
+        };
+        contextProto.moduleLoadDefinition = function(module) {
+            if (isModuleDefined(module)) {
+                /*Promise*/
+                return promise$module.done;
+            }
+            var res = getModuleProperty(module, /*PROPERTY_LOADING_DEFINITION*/ "_2");
+            if (!res) {
+                var filename = module.filename;
+                var builtin = this.builtinModules["/" + filename];
+                if (builtin) {
+                    this.moduleDefine(module, [], builtin(this));
+                    res = /*Promise*/ promise$module.done;
+                } else {
+                    var checkResult = function(error) {
+                        // check that the definition was correctly loaded:
+                        if (!isModuleDefined(module)) {
+                            /*noderError*/
+                            throw noderError$module("moduleLoadDefinition", [ module ], error);
+                        }
+                    };
+                    res = this.loader.moduleLoad(module).thenSync(checkResult, checkResult);
+                }
+                setModuleProperty(module, /*PROPERTY_LOADING_DEFINITION*/ "_2", res);
+            }
+            return res;
+        };
+        contextProto.moduleProcessPlugin = function(module, pluginDef) {
+            var allowedParameters = {
+                module: module,
+                __dirname: module.dirname,
+                __filename: module.filename,
+                "null": null
+            };
+            var parameters = pluginDef.args.slice(0);
+            for (var i = 0, l = parameters.length; i < l; i++) {
+                var curParameter = parameters[i];
+                if (/*typeUtils*/ type$module.isArray(curParameter)) {
+                    curParameter = curParameter[0];
+                    if (!allowedParameters.hasOwnProperty(curParameter)) {
+                        return;
+                    }
+                    parameters[i] = allowedParameters[curParameter];
+                }
+            }
+            return this.moduleExecute(this.getModule(this.moduleResolve(module, pluginDef.module))).thenSync(function(plugin) {
+                var method = (plugin[pluginDef.method] || {}).$preload;
+                if (method) {
+                    return method.apply(plugin, parameters);
+                }
+            }).thenSync(null, function(error) {
+                /*noderError*/
+                throw noderError$module("moduleProcessPlugin", [ module, pluginDef ], error);
+            });
+        };
+        contextProto.modulePreloadDependencies = function(module, dependencies) {
+            var promises = [];
+            for (var i = 0, l = dependencies.length; i < l; i++) {
+                var curDependency = dependencies[i];
+                var curPromise = /*typeUtils*/ type$module.isString(curDependency) ? this.modulePreload(this.getModule(this.moduleResolve(module, curDependency)), module) : this.moduleProcessPlugin(module, curDependency);
+                promises.push(curPromise);
+            }
+            return this.allSettled(promises);
+        };
+        contextProto.moduleExecuteSync = function(module) {
+            if (module.loaded || getModuleProperty(module, /*PROPERTY_EXECUTING*/ "_1")) {
+                /* this.executing is true only in the case of a circular dependency */
+                return module.exports;
+            }
+            var preloadPromise = this.modulePreload(module);
+            if (!preloadPromise.isFulfilled()) {
+                /*noderError*/
+                throw noderError$module("notPreloaded", [ module ], preloadPromise.result());
+            }
+            var exports = module.exports;
+            setModuleProperty(module, /*PROPERTY_EXECUTING*/ "_1", true);
+            try {
+                getModuleProperty(module, /*PROPERTY_DEFINITION*/ "_0").call(exports, module, global);
+                setModuleProperty(module, /*PROPERTY_DEFINITION*/ "_0", null);
+                module.loaded = true;
+                return module.exports;
+            } finally {
+                setModuleProperty(module, /*PROPERTY_EXECUTING*/ "_1", false);
+            }
+        };
+        contextProto.moduleResolve = function(module, id) {
+            return this.resolver.moduleResolve(module, id);
+        };
+        contextProto.moduleRequire = function(module, id) {
+            return this.moduleExecuteSync(this.getModule(this.moduleResolve(module, id)));
+        };
+        contextProto.getModule = function(moduleFilename) {
+            if (!moduleFilename) {
+                // anonymous module
+                return new Module(this);
+            }
+            var res = this.cache[moduleFilename];
+            if (!res) {
+                this.cache[moduleFilename] = res = new Module(this, moduleFilename);
+            }
+            return res;
+        };
+        contextProto.define = function(moduleFilename, dependencies, body) {
+            this.moduleDefine(this.getModule(moduleFilename), dependencies, body);
+        };
+        contextProto.moduleDefine = function(module, dependencies, body) {
+            if (!isModuleDefined(module)) {
+                // do not override an existing definition
+                setModuleProperty(module, /*PROPERTY_DEFINITION*/ "_0", body);
+                setModuleProperty(module, /*PROPERTY_DEPENDENCIES*/ "dependencies", dependencies);
+            }
+            return module;
+        };
+        contextProto.moduleExecute = function(module) {
+            var self = this;
+            return self.modulePreload(module).thenSync(function() {
+                return self.moduleExecuteSync(module);
+            });
+        };
+        contextProto.moduleAsyncRequire = function(module, dependencies) {
+            return this.modulePreloadDependencies(module, dependencies).thenSync(function() {
+                var result = [];
+                for (var i = 0, l = dependencies.length; i < l; i++) {
+                    var item = dependencies[i];
+                    if (/*typeUtils*/ type$module.isString(item)) {
+                        result[i] = module.require(item);
+                    }
+                }
+                return result;
+            });
+        };
+        contextProto.jsModuleDefine = function(jsCode, moduleFilename, url) {
+            var dependencies = /*findRequires*/ findRequires$module(jsCode, true);
+            var body = this.jsModuleEval(jsCode, url || moduleFilename);
+            return this.moduleDefine(this.getModule(moduleFilename), dependencies, body);
+        };
+        contextProto.jsModuleExecute = function(jsCode, moduleFilename, url) {
+            return this.moduleExecute(this.jsModuleDefine(jsCode, moduleFilename, url));
+        };
+        contextProto.jsModuleEval = function(jsCode, url) {
+            /*jsEval*/
+            return jsEval$module(jsCode, url, "(function(module, global){\nvar require = module.require, exports = module.exports, __filename = module.filename, __dirname = module.dirname;\n\n", "\n\n})");
+        };
+        contextProto.execModuleCall = function(moduleFilename) {
+            return this.moduleExecute(this.getModule(this.moduleResolve(this.rootModule, moduleFilename)));
+        };
+        Context.builtinModules = BuiltinModules.prototype = {
+            "/noder-js/asyncRequire.js": function(context) {
+                return function(module) {
+                    module.exports = context.rootModule.asyncRequire;
+                };
+            },
+            "/noder-js/currentContext.js": function(context) {
+                return function(module) {
+                    module.exports = context;
+                };
+            }
+        };
+        contextProto.Context = Context;
+        Context.createContext = function(cfg) {
+            return new Context(cfg).rootModule;
+        };
+        Context.expose = contextProto.expose = function(name, exports) {
+            var body = function(module) {
+                module.exports = exports;
+            };
+            this.builtinModules["/" + name] = function() {
+                return body;
+            };
+        };
+        context$module = Context;
+    })();
+    defaultConfig$module = packagedConfig$module().mainContext;
+    /*Context*/ context$module.expose("noder-js/promise.js", promise$module);
+    /*Context*/ context$module.expose("noder-js/context.js", context$module);
+    /*Context*/ context$module.expose("noder-js/findRequires.js", findRequires$module);
+    /*Context*/ context$module.expose("noder-js/jsEval.js", jsEval$module);
+    /*Context*/ context$module.expose("noder-js/request.js", request$module);
+    /*Context*/ context$module.expose("noder-js/asyncCall.js", asyncCall$module);
+    main$module = /*Context*/ context$module.createContext(/*defaultConfig*/ defaultConfig$module);
+    return main$module;
+}(function() {
+    return {
+        mainContext: {
+            main: "aria/bootstrap-node.js",
+            failFast: false,
+            resolver: {
+                "default": {
+                    ariatemplates: "aria"
+                }
+            },
+            packaging: {
+                ariatemplates: true,
+                bootstrap: function(define) {
+                    define("aria/bootstrap-node.js", [ "noder-js/request", "noder-js/currentContext" ], function(module, global) {
+                        var require = module.require, exports = module.exports, __filename = module.filename, __dirname = module.dirname;
+                        /*
+ * Copyright 2012 Amadeus s.a.s.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+                        /* jshint -W117 : true, -W098 : true */
+                        var request = require("noder-js/request");
+                        var currentContext = require("noder-js/currentContext");
+                        var modulesToExecute = [];
+                        var syncRequire = function(logicalPath) {
+                            var url = Aria.rootFolderPath + logicalPath;
+                            request(url, {
+                                sync: true
+                            }).thenSync(function(xhr) {
+                                var newModule = currentContext.jsModuleDefine(xhr.responseText, logicalPath, url);
+                                modulesToExecute.push(newModule);
+                            }).done();
+                        };
+                        syncRequire("aria/Aria.js");
+                        syncRequire("aria/core/JsObject.js");
+                        syncRequire("aria/utils/Type.js");
+                        syncRequire("aria/utils/String.js");
+                        syncRequire("aria/core/log/DefaultAppender.js");
+                        syncRequire("aria/core/Log.js");
+                        syncRequire("aria/utils/Array.js");
+                        syncRequire("aria/utils/QueryString.js");
+                        syncRequire("aria/utils/json/JsonSerializer.js");
+                        syncRequire("aria/utils/Json.js");
+                        syncRequire("aria/utils/Object.js");
+                        syncRequire("aria/core/useragent/ua-parser.js");
+                        syncRequire("aria/core/useragent/UserAgent.js");
+                        syncRequire("aria/core/Browser.js");
+                        syncRequire("aria/dom/DomReady.js");
+                        syncRequire("aria/core/Cache.js");
+                        syncRequire("aria/core/ClassLoader.js");
+                        syncRequire("aria/core/JsClassLoader.js");
+                        syncRequire("aria/core/ResClassLoader.js");
+                        syncRequire("aria/core/TplClassLoader.js");
+                        syncRequire("aria/core/CSSClassLoader.js");
+                        syncRequire("aria/core/TmlClassLoader.js");
+                        syncRequire("aria/core/CmlClassLoader.js");
+                        syncRequire("aria/core/TxtClassLoader.js");
+                        syncRequire("aria/core/ClassMgr.js");
+                        syncRequire("aria/core/DownloadMgr.js");
+                        syncRequire("aria/core/FileLoader.js");
+                        syncRequire("aria/core/Timer.js");
+                        syncRequire("aria/core/Interfaces.js");
+                        syncRequire("aria/core/transport/ITransports.js");
+                        syncRequire("aria/core/transport/BaseXHR.js");
+                        syncRequire("aria/core/transport/XHR.js");
+                        syncRequire("aria/core/transport/XDR.js");
+                        syncRequire("aria/core/transport/JsonP.js");
+                        syncRequire("aria/core/transport/Local.js");
+                        syncRequire("aria/core/transport/IFrame.js");
+                        syncRequire("aria/core/IOFiltersMgr.js");
+                        syncRequire("aria/core/IO.js");
+                        syncRequire("aria/core/Sequencer.js");
+                        syncRequire("aria/core/MultiLoader.js");
+                        syncRequire("aria/core/JsonValidator.js");
+                        syncRequire("aria/core/JsonTypesCheck.js");
+                        syncRequire("aria/core/JsonTypes.js");
+                        syncRequire("aria/core/BaseTypes.js");
+                        syncRequire("aria/core/CfgBeans.js");
+                        syncRequire("aria/core/AppEnvironment.js");
+                        syncRequire("aria/core/environment/EnvironmentBaseCfgBeans.js");
+                        syncRequire("aria/core/environment/EnvironmentBase.js");
+                        syncRequire("aria/core/environment/Environment.js");
+                        syncRequire("aria/core/ResMgr.js");
+                        syncRequire("aria/core/loaders/OldATLoader.js");
+                        // Once everything is in the cache, let's execute all modules:
+                        for (var i = 0, l = modulesToExecute.length; i < l; i++) {
+                            currentContext.moduleExecuteSync(modulesToExecute[i]);
+                        }
+                        modulesToExecute = null;
+                    });
+                }
+            }
+        },
+        errorContext: {
+            main: "error.js",
+            packaging: {
+                baseUrl: "%scriptdir%/noderError/",
+                requestConfig: {
+                    sync: true
+                }
+            }
+        }
+    };
+});

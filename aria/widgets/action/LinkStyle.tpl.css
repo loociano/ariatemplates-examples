@@ -1,0 +1,46 @@
+/*
+ * Aria Templates 1.7.8 - 08 Jun 2015
+ *
+ * Copyright 2009-2015 Amadeus s.a.s.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+{CSSTemplate {
+    $classpath : "aria.widgets.action.LinkStyle",
+    $extends : "aria.widgets.WidgetStyle"
+}}
+{var skinnableClassName="Link"/}
+{macro writeState(info)}
+	{var pseudoclass=""/}
+	{if info.stateName != "normal"}
+	{set pseudoclass=":"+info.stateName/}
+	{/if}
+
+	a${pseudoclass}.xLink_${info.skinClassName} {
+	color:${info.state.color};
+	{if info.state.textDecoration}
+		text-decoration:${info.state.textDecoration};
+	{/if}
+	}
+{/macro}
+
+{macro writeSkinClass(info)}
+	{var skinClassName=info.skinClassName/}
+	{var skinClass=info.skinClass/}
+	a.xLink_disabled{
+		color:${skinClass.disabledColor};
+		text-decoration:none;
+		cursor:default;
+	}
+
+{/macro}
+{/CSSTemplate}

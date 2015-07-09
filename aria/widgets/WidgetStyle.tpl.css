@@ -1,0 +1,269 @@
+/*
+ * Aria Templates 1.7.8 - 08 Jun 2015
+ *
+ * Copyright 2009-2015 Amadeus s.a.s.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+{CSSTemplate {
+    $classpath : "aria.widgets.WidgetStyle",
+    $dependencies : ["aria.widgets.AriaSkinInterface", "aria.utils.Type"],
+    $hasScript: true
+}}
+
+    {var skinnableClassName="Widget"/}
+    {var useFrame=false/}
+
+    {macro main()}
+        {call startLooping()/}
+    {/macro}
+
+    {macro startLooping()}
+        {var skinClasses=aria.widgets.AriaSkinInterface.getSkinClasses(skinnableClassName)/}
+        {foreach skinClass in skinClasses}
+            {var info={
+                skinClassName: skinClass_index,
+                skinClass: skinClass
+            }/}
+            {call writeSkinClass(info)/}
+            {call writeAllStates(info)/}
+        {/foreach}
+    {/macro}
+
+    {macro writeAllStates(info)}
+        {var states=aria.widgets.AriaSkinInterface.getWidgetStates(skinnableClassName)/}
+        {if states}
+            {foreach state in states}
+                {var info={
+                    skinClassName: info.skinClassName,
+                    skinClass: info.skinClass,
+                    stateName: state_index,
+                    state: info.skinClass.states[state_index]
+                }/}
+                {if useFrame}
+                    {call writeStateOfFrame(info)/}
+                {/if}
+                {call writeState(info)/}
+            {/foreach}
+        {/if}
+    {/macro}
+
+    {macro writeSkinClass(info)}
+        // to be overridden
+    {/macro}
+
+    {macro writeState(info)}
+        // to be overridden
+    {/macro}
+
+    {macro background(color,imageurl,otherparams)}
+        {checkDefault color=""/}
+        {checkDefault imageurl=""/}
+        {checkDefault otherparams=""/}
+        ${aria.widgets.AriaSkinInterface.backgroundMacro(color,imageurl,otherparams)}
+    {/macro}
+
+    {macro opacity(percent)}
+        filter: alpha(opacity=${percent});
+        -moz-opacity: ${percent/100};
+        opacity: ${percent/100};
+    {/macro}
+
+    // Macros for frames:
+
+    {macro writeStateOfFixedHeightFrame(info)}
+        {var state=info.state.frame/}
+        {var fontStyle=state.font/}
+        {var sprWidth=state.sprWidth/}
+        {var sprHeight=state.sprHeight/}
+        {var sprIndex=state.sprIdx/}
+        {var sprSpacing=state.sprSpacing/}
+        {var refTop=(sprHeight+sprSpacing)*sprIndex/}
+        {var spcLeft=state.spcLeft/}
+        {var spcRight=sprWidth-spcLeft/}
+        {var prefix=cssPrefix(info)/}
+        {var verticalAlignApplied = state.verticalAlign && state.innerHeight /}
+        .${prefix}bkgA {
+            {call background("transparent",state.spriteURL,"no-repeat scroll 0 0")/}
+            font-size:1px;
+        }
+        .${prefix}bkgB {
+            {call background("transparent",state.spriteURLv,"repeat-x 0 0")/}
+        }
+        .${prefix}w {
+            height:${sprHeight}px;
+        }
+        .${prefix}c {
+            margin: ${state.marginTop}px ${state.marginRight}px ${state.marginBottom}px ${state.marginLeft}px;
+            color: ${state.color};
+            {if verticalAlignApplied}
+                vertical-align: ${state.verticalAlign};
+                line-height: ${state.innerHeight + (aria.utils.Type.isNumber(state.innerHeight) ? "px" : "")};
+            {/if}
+        }
+        {if fontStyle}
+            {call formElementsFontStyle(prefix+"c", fontStyle)/}
+        {/if}
+        {if state.skipLeftBorder!=true}
+            .${prefix}b {width:${spcLeft}px; height:${sprHeight}px; background-position:0 ${-refTop}px;
+                {if verticalAlignApplied}
+                    line-height:${sprHeight}px;
+                {/if}
+            }
+        {/if}
+        .${prefix}m {height:${sprHeight}px; background-position:0 ${-refTop}px;
+            {if verticalAlignApplied}
+                line-height:${sprHeight}px;
+            {/if}
+        }
+        {if state.skipRightBorder!=true}
+            .${prefix}e {width:${spcRight}px; height:${sprHeight}px; background-position: ${-spcLeft}px ${-refTop}px;
+                {if verticalAlignApplied}
+                    line-height:${sprHeight}px;
+                {/if}
+            }
+        {/if}
+        .xWidget.xFullWidth .${prefix}m {
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: ${spcLeft}px;
+            right: ${spcRight}px;
+        }
+
+        .xWidget.xFullWidth .${prefix}e {
+            position: absolute;
+            right: 0px;
+        }
+    {/macro}
+
+    {macro writeStateOfSimpleFrame(info)}
+        {var state=info.state.frame/}
+        {var fontStyle=state.font/}
+        {var padTop=state.paddingTop/}
+        {var prefix=cssPrefix(info)/}
+        .${prefix}frame  {
+            {if state.frameHeight}
+                height: ${state.frameHeight}px;
+            {/if}
+            border-top: ${state.borderTop != null ? state.borderTop : state.borderSize}px ${state.border} ${state.borderColor};
+            border-bottom: ${state.borderBottom != null ? state.borderBottom : state.borderSize}px ${state.border} ${state.borderColor};
+            border-left: ${state.borderLeft != null ? state.borderLeft : state.borderSize}px ${state.border} ${state.borderColor};
+            border-right: ${state.borderRight != null ? state.borderRight : state.borderSize}px ${state.border} ${state.borderColor};
+            margin-top: ${state.marginTop}px;
+            margin-bottom: ${state.marginBottom}px;
+            margin-left: ${state.marginLeft}px;
+            margin-right: ${state.marginRight}px;
+            {if state.fontWeight}
+                font-weight: ${state.fontWeight};
+            {/if}
+
+            {call writeBorderRadius(state)/}
+
+            {if state.boxShadow}
+                box-shadow: ${state.boxShadow};
+            {/if}
+            padding: ${state.paddingTop}px ${state.paddingRight}px ${state.paddingBottom}px ${state.paddingLeft}px;
+            {if (padTop>1)}
+            *padding-top: ${padTop-1}px;
+            {/if}
+            background-color: ${state.backgroundColor};
+            color: ${state.color};
+            vertical-align: top;
+        }
+        {if fontStyle}
+            {call formElementsFontStyle(prefix+"frame", fontStyle)/}
+        {/if}
+    {/macro}
+
+    {macro writeBorderRadius(state)}
+        border-top-right-radius: ${state.borderTopRightRadius}px;
+        border-top-left-radius: ${state.borderTopLeftRadius}px;
+        border-bottom-right-radius: ${state.borderBottomRightRadius}px;
+        border-bottom-left-radius: ${state.borderBottomLeftRadius}px;
+    {/macro}
+
+    {macro writeStateOfTableFrame(info)}
+        {var state=info.state.frame/}
+        {var fontStyle=state.font/}
+        {var sprWidth=state.sprWidth/}
+        {var sprHeight=state.sprHeight/}
+        {var sprIndex=state.sprIdx/}
+        {var sprSpacing=state.sprSpacing/}
+        {var refTop=(sprHeight+sprSpacing)*sprIndex/}
+        {var refLeft=(sprWidth+sprSpacing)*sprIndex/}
+        {var spcLeft=state.spcLeft/}
+        {var spcTop=state.spcTop/}
+        {var spcRight=sprWidth-spcLeft/}
+        {var spcBottom=sprHeight-spcTop/}
+        {var prefix=cssPrefix(info)/}
+
+        .${prefix}bkgA {
+            {call background("transparent",state.spriteURL,"no-repeat scroll 0 0")/}
+            font-size:1px;
+        }
+        .${prefix}bkgB {
+            {call background("transparent",state.spriteURLv,"repeat-x 0 0")/}
+            font-size:1px;
+        }
+        .${prefix}bkgC {
+            {call background("transparent",state.spriteURLh,"repeat-y 0 0")/}
+            font-size:1px;
+        }
+        .${prefix}c {
+            margin: ${state.marginTop}px ${state.marginRight}px ${state.marginBottom}px ${state.marginLeft}px;
+            color: ${state.color};
+        }
+        {if fontStyle}
+            {call formElementsFontStyle(prefix+"c", fontStyle)/}
+        {/if}
+        .${prefix}m {
+            background-color: ${state.backgroundColor};
+        }
+        .${prefix}tlc {width:${spcLeft}px; height:${spcTop}px; background-position:0 ${-refTop}px;}
+        .${prefix}ts {height:${spcTop}px; background-position:0 ${-refTop}px; }
+        .${prefix}trc {width:${spcRight}px; height:${spcTop}px; background-position: ${-spcLeft}px ${-refTop}px;}
+        .${prefix}rs {width:${spcRight}px; background-position:${-refLeft-spcLeft}px 0;}
+        .${prefix}brc {width:${spcRight}px; height:${spcBottom}px; background-position: ${-spcLeft}px ${-refTop-spcTop}px;}
+        .${prefix}bs {height: ${spcBottom}px; background-position:0 ${-refTop-spcTop}px;}
+        .${prefix}blc {width:${spcLeft}px; height:${spcBottom}px; background-position: 0 ${-refTop-spcTop}px;}
+        .${prefix}ls {width: ${spcLeft}px; background-position:${-refLeft}px 0;}
+        .${prefix}frameIcon {
+                display: block;
+                height:${state.frameHeight}px;
+                {call background("",state.frameIcon,"no-repeat "+state.frameIconHPos)/}
+        }
+    {/macro}
+    {macro formElementsFontStyle(className, fontStyle)}
+        .${className}, .${className} input, .${className} textarea{
+            {call generateFontStyle(fontStyle)/}
+        }
+    {/macro}
+    {macro generateFontStyle(fontStyleObj)}
+        {if fontStyleObj.fontStyle}
+            font-style: ${fontStyleObj.fontStyle};
+        {/if}
+        {if fontStyleObj.fontVariant}
+            font-variant: ${fontStyleObj.fontVariant};
+        {/if}
+        {if fontStyleObj.fontSize}
+            font-size: ${fontStyleObj.fontSize}px;
+        {/if}
+        {if fontStyleObj.fontWeight}
+            font-weight: ${fontStyleObj.fontWeight};
+        {/if}
+        {if fontStyleObj.fontFamily}
+            font-family: ${fontStyleObj.fontFamily};
+        {/if}
+    {/macro}
+
+{/CSSTemplate}
