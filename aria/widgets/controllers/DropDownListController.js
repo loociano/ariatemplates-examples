@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -203,7 +203,7 @@ module.exports = Aria.classDefinition({
                     report = new ariaWidgetsControllersReportsDropDownControllerReport();
                 }
                 // domEvent.KC_ESCAPE for issue#697 on FF
-                if (report && keyCode != domEvent.KC_TAB) {
+                if (report && keyCode != domEvent.KC_TAB && keyCode != domEvent.KC_ARROW_DOWN) {
                     // domEvent.KC_ESCAPE for issue#697 on FF
                     report.cancelKeyStroke = (keyCode == domEvent.KC_ESCAPE);
                 }

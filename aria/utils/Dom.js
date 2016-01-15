@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ module.exports = Aria.classDefinition({
         DIV_NOT_FOUND : "Missing div '%1' in DOM.",
         INSERT_ADJACENT_INVALID_POSITION : "Invalid position %1. Expected one of: beforeBegin, afterBegin, beforeEnd or afterEnd.",
 
-        pxRegExp : /^[0-9]+px$/
+        pxRegExp : /^[0-9]+(\.[0-9]+)?px$/
 
     },
     $prototype : {
@@ -822,7 +822,7 @@ module.exports = Aria.classDefinition({
             } else {
                 var width, height;
                 var browser = ariaCoreBrowser;
-                if (browser.isChrome || browser.isSafari) {
+                if (browser.isChrome || browser.isOpera || browser.isSafari) {
                     var rectTextObject = element.getBoundingClientRect();
                     width = Math.round(rectTextObject.width);
                     height = Math.round(rectTextObject.height);
@@ -1149,6 +1149,15 @@ module.exports = Aria.classDefinition({
 
                 if (element) {
                     var hasScrollbar = (!element.clientHeight) ? false : element.scrollHeight > element.clientHeight;
+
+                    if (!hasScrollbar && element == documentScroll && documentScroll == document.body) {
+                        var docElement = document.documentElement;
+                        // On Chrome, documentScroll == document.body due to https://code.google.com/p/chromium/issues/detail?id=157855
+                        // But if the body has no margin: document.body.scrollHeight == document.body.clientHeight
+                        // and hasScrollbar can be false even if there is a scrollbar. That's why the following line was added:
+                        hasScrollbar = (!docElement || !docElement.clientHeight) ? false : docElement.scrollHeight > docElement.clientHeight;
+                    }
+
                     if (!hasScrollbar) {
                         if (element == documentScroll) {
                             element = null;
@@ -1217,7 +1226,7 @@ module.exports = Aria.classDefinition({
             if (document == null) {
                 document = Aria.$window.document;
             }
-            return ((!(ariaCoreBrowser.isSafari || ariaCoreBrowser.isChrome) && (document.compatMode == "CSS1Compat"))
+            return ((!(ariaCoreBrowser.isSafari || ariaCoreBrowser.isChrome || ariaCoreBrowser.isEdge || ariaCoreBrowser.isOpera) && (document.compatMode == "CSS1Compat"))
                     ? document.documentElement
                     : document.body);
         },
@@ -1325,7 +1334,7 @@ module.exports = Aria.classDefinition({
         getStylePx : function (element, property, defaultValue) {
             var value = this.getStyle(element, property);
             if (this.pxRegExp.test(value)) {
-                return parseInt(value, 10);
+                return Math.round(parseFloat(value));
             }
             return defaultValue;
         },

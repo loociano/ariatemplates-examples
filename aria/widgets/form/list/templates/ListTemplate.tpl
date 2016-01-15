@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,9 @@
             {on mouseup {fn: "itemClick"} /}
             {on mouseover {fn: "itemMouseOver"} /}
         {/if}
+        {if data.waiAria}
+            role="listbox"
+        {/if}
         >
         <a href="#" style="display: none;">&nbsp;</a> //IE6 does not highlight the 1 elm in list
         {foreach item inArray data.items}
@@ -42,7 +45,7 @@
 
     {macro renderItem(item, itemIdx)}
         {var a = _getClassForItem(item)/}
-        <a href="javascript:void(0)" class="${a}" data-itemIdx="${itemIdx}" onclick="return false;">
+        <a {if data.waiAria}{id data.listItemDomIdPrefix + itemIdx/} role="option"{/if} href="javascript:void(0)" class="${a}" data-itemIdx="${itemIdx}" onclick="return false;">
             {if ! item.label}
                 &nbsp;
             {else/}

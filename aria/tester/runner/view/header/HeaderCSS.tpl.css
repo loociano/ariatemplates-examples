@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -113,7 +113,7 @@
     .errorCounterBox {
         margin-left : 10px;
         margin-top : 10px;
-        {if (aria.core.Browser.isChrome ||aria.core.Browser.isOldIE)}
+        {if (aria.core.Browser.isChrome || aria.core.Browser.isOpera || aria.core.Browser.isOldIE)}
             height : 26px;
             padding-top : 2px;
         {else/}

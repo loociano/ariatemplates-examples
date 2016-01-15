@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -663,8 +663,6 @@ var ariaUtilsType = require("../utils/Type");
                     } else /* if (this.sortOrder == this.SORT_DESCENDING) */{
                         this.$assert(330, this.sortOrder == this.SORT_DESCENDING);
                         this.sortOrder = this.SORT_ASCENDING;
-                        this.sortName = sortName;
-                        this.sortKeyGetter = this.$normCallback(sortKeyGetter);
                     }
                 } else {
                     this.sortName = sortName;

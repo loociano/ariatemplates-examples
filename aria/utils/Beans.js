@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,22 @@ module.exports = Aria.beanDefinitions({
                 "inputPattern" : {
                     $type : "environmentBase:inputFormatTypes",
                     $description : "Date pattern used to match user input to convert it in a Javascript valid date."
+                },
+                "isDateBeforeMonth" : {
+                    $type : "json:Boolean",
+                    $description : "Whether the date is written before or after the month."
+                },
+                "isMonthYear" : {
+                    $type : "json:Boolean",
+                    $description : "Whether the date contains only the month and year, without day."
+                },
+                "cutYear" : {
+                    $type : "json:Integer",
+                    $description : "2-digits number above which a 2-digits year 'xx' is interpreted as '19xx' instead of '20xx'."
+                },
+                "yearBeforeMonth" : {
+                    $type : "json:Boolean",
+                    $description : "Whether the year is written before or after the month."
                 }
             }
         }

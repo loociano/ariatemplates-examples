@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -202,6 +202,16 @@ var ariaCoreJsonValidator = require("../core/JsonValidator");
                 height : null
             },
             // viewportSize: {width: ..., height: ...},
+
+            /**
+             * Raises the viewportResized event with the current viewport size.
+             */
+            refreshLayout : function () {
+                layout.$raiseEvent({
+                    name : "viewportResized",
+                    viewportNewSize : layout.viewportSize
+                });
+            },
 
             $on : function () {
                 this.$JsObject.$on.apply(this, arguments);

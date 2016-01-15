@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,9 @@ module.exports = Aria.tplScriptDefinition({
             var weekWrapper = this.$getChild("month_" + position.month.monthKey, position.weekInMonthIndex);
             var dayWrapper = weekWrapper.getChild((this.settings.showWeekNumbers ? 1 : 0) + position.dayInWeekIndex);
             dayWrapper.classList.setClassName(this.getClassForDay(position.day));
+            if (this.settings.waiAria) {
+                dayWrapper.setAttribute("aria-selected", !!position.day.isSelected);
+            }
             dayWrapper.$dispose();
             weekWrapper.$dispose();
         },

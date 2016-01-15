@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ var ariaWidgetsFormListListStyle = require("./list/ListStyle.tpl.css");
 var ariaWidgetsContainerDivStyle = require("../container/DivStyle.tpl.css");
 var ariaWidgetsFormDropDownTextInput = require("./DropDownTextInput");
 var ariaCoreBrowser = require("../../core/Browser");
-
 
 /**
  * AutoComplete widget
@@ -49,7 +48,13 @@ module.exports = Aria.classDefinition({
 
         this.$DropDownTextInput.constructor.call(this, cfg, ctxt, lineNumber, controllerInstance);
 
-        if (!cfg.expandButton) {
+        if (cfg.expandButton) {
+            this._iconsAttributes = {
+                // unselectable is necessary on IE so that, on mouse down, there is no blur of the active element
+                // (preventing the default action on mouse down does not help on IE)
+                "dropdown" : 'unselectable="on"'
+            };
+        } else {
             /**
              * Array of icon names which need to be hidden.
              * @type Array
@@ -78,6 +83,10 @@ module.exports = Aria.classDefinition({
          * @protected
          */
         this._freePopupWidth = false;
+
+        if (cfg.waiAria) {
+            this._extraInputAttributes += ' aria-expanded="false" role="combobox" aria-autocomplete="list"';
+        }
     },
     $destructor : function () {
         // The dropdown might still be open when we destroy the widget, destroy it now
@@ -131,8 +140,8 @@ module.exports = Aria.classDefinition({
          */
         _renderDropdownContent : function (out, options) {
             options = options || {};
+            var cfg = this._cfg;
             if (!("defaultTemplate" in options)) {
-                var cfg = this._cfg;
                 if (cfg.suggestionsTemplate) {
                     options.defaultTemplate = cfg.suggestionsTemplate;
                 } else {
@@ -146,6 +155,13 @@ module.exports = Aria.classDefinition({
                 options.minWidth = inputMarkupWidth + this._skinObj.offsetRight;
             }
             options.maxHeight = this._cfg.popupMaxHeight || 210;
+            if (cfg.waiAria) {
+                options.onchange = {
+                    scope: this,
+                    fn: this._updateAriaActiveDescendant,
+                    args: options.onchange
+                };
+            }
             this.$DropDownListTrait._renderDropdownContent.call(this, out, options);
         },
 
@@ -161,7 +177,35 @@ module.exports = Aria.classDefinition({
                 this._keepFocus = false;
             }
             this.$DropDownTextInput._reactToControllerReport.call(this, report, arg);
+        },
 
+        /**
+         * DOM callback function called when the focus is taken off the input. The onBlur event is available on the
+         * input that sits inside a span. In this function we always close the popup.
+         * @param {aria.DomEvent} event Blur event
+         * @protected
+         */
+        _dom_onblur : function (event, avoidCallback) {
+            this._keepFocus = false;
+            this.$DropDownTextInput._dom_onblur.call(this, event, avoidCallback);
+            if (this._dropdownPopup) {
+                this._dropdownPopup.close(event);
+            }
+
+        },
+
+        /**
+         * Handle events raised by the frame
+         * @param {Object} evt
+         * @override
+         */
+        _frame_events : function (evt) {
+            if (evt.name == "iconMouseDown" && evt.iconName == "dropdown" && !this._cfg.disabled) {
+                evt.event.preventDefault();
+            } else if (evt.name == "iconClick" && evt.iconName == "dropdown" && !this._cfg.disabled) {
+                this._toggleDropdown();
+                evt.event.preventDefault();
+            }
         },
 
         /**
@@ -181,6 +225,56 @@ module.exports = Aria.classDefinition({
                     this._reactToControllerReport(report);
                 }
             }
+        },
+
+        /**
+         * Updates the aria-activedescendant attribute on the input DOM element.
+         * This method supposes that the popup is open.
+         * This method is registered as the onchange callback for the list widget,
+         * if accessibility is enabled. It is also called from _afterDropdownOpen.
+         */
+        _updateAriaActiveDescendant : function(event, cb) {
+            if (this._cfg.waiAria) {
+                var field = this.getTextInputField();
+                var listWidget = this.controller.getListWidget();
+                var ariaActiveDescendant = listWidget.getOptionDomId(this.controller.getDataModel().selectedIdx);
+                if (ariaActiveDescendant != null) {
+                    field.setAttribute("aria-activedescendant", ariaActiveDescendant);
+                } else {
+                    field.removeAttribute("aria-activedescendant");
+                }
+            }
+            if (cb) {
+                this.$callback(cb, event);
+            }
+        },
+
+        /**
+         * Callback for the event onAfterOpen raised by the popup.
+         * @override
+         */
+        _afterDropdownOpen : function () {
+            this.$DropDownTextInput._afterDropdownOpen.apply(this, arguments);
+            if (this._cfg.waiAria) {
+                var field = this.getTextInputField();
+                field.setAttribute("aria-owns", this.controller.getListWidget().getListDomId());
+                field.setAttribute("aria-expanded", "true");
+                this._updateAriaActiveDescendant();
+            }
+        },
+
+        /**
+         * Called after the dropdown is closed.
+         * @override
+         */
+        _afterDropdownClose : function () {
+            if (this._cfg.waiAria) {
+                var field = this.getTextInputField();
+                field.removeAttribute("aria-activedescendant");
+                field.setAttribute("aria-expanded", "false");
+                field.removeAttribute("aria-owns");
+            }
+            this.$DropDownListTrait._afterDropdownClose.apply(this, arguments);
         },
 
         /**

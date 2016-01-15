@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -364,6 +364,14 @@ var ariaCoreTimer = require("../../core/Timer");
                 // list widget, if any. This is done when the section containing the
                 // list widget is disposed.
                 this._listWidget = listWidget;
+            },
+
+            /**
+             * Get the list widget.
+             * @return {aria.widgets.form.list.List} listWidget
+             */
+            getListWidget : function () {
+                return this._listWidget;
             }
         }
     });

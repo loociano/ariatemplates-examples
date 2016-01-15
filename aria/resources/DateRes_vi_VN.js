@@ -1,0 +1,69 @@
+/*
+ * Aria Templates 1.7.15 - 11 Dec 2015
+ *
+ * Copyright 2009-2015 Amadeus s.a.s.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Aria.resourcesDefinition({
+    $classpath : 'aria.resources.DateRes',
+    $resources : {
+        day : [
+            "Chủ nhật",
+            "Thứ hai",
+            "Thứ ba",
+            "Thứ tư",
+            "Thứ năm",
+            "Thứ sáu",
+            "Thứ bẩy"
+        ],
+        // a false value for the following items mean: use substring
+        // to generate the short versions of days or months
+        dayShort : [
+            "CN",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6",
+            "T7"
+        ],
+        month : [
+            "Tháng một",
+            "Tháng hai",
+            "Tháng ba",
+            "Tháng tư",
+            "Tháng năm",
+            "Tháng sáu",
+            "Tháng bẩy",
+            "Tháng tám",
+            "Tháng chín",
+            "Tháng mười",
+            "Tháng mười một",
+            "Tháng mười hai"
+        ],
+        monthShort : [
+            "Th1",
+            "Th2",
+            "Th3",
+            "Th4",
+            "Th5",
+            "Th6",
+            "Th7",
+            "Th8",
+            "Th9",
+            "Th10",
+            "Th11",
+            "Th12"
+        ]
+    }
+});

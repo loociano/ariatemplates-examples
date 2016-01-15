@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -177,6 +177,13 @@ module.exports = Aria.classDefinition({
          * @type Boolean
          */
         this.isFirefox = false;
+
+        /**
+         * <em>true</em> if the browser is any version of Microsoft Edge.
+         * Some reference: https://msdn.microsoft.com/en-us/library/hh869301%28v=vs.85%29.aspx#edge
+         * @type Boolean
+         */
+        this.isEdge = false;
 
         /* BACKWARD-COMPATIBILITY-BEGIN (GitHub #1397) */
         /**
@@ -942,18 +949,18 @@ module.exports = Aria.classDefinition({
                     case "safari":
                         if (output.isSymbian) {
                             this._setFlag(output, "S60");
-                        } else if (/(phantomjs)/ig.test(output.ua)) {
-                            this._setFlag(output, "PhantomJS");
-                            name = "PhantomJS";
                         } else {
                             this._setFlag(output, "Safari");
                         }
+                        break;
+                    case "androidbrowser":
+                        this._setFlag(output, "AndroidBrowser");
                         break;
                     default:
                         maybeOtherBrowser = true;
                 }
 
-                if (ariaUtilsArray.contains(["Firefox", "Chrome", "IE", "Opera", "IEMobile"], name)) {
+                if (ariaUtilsArray.contains(["Firefox", "Chrome", "IE", "Opera", "IEMobile", "Edge", "PhantomJS"], name)) {
                     this._setFlag(output, name);
                     maybeOtherBrowser = false;
                 }
@@ -1016,14 +1023,6 @@ module.exports = Aria.classDefinition({
                 // make sure output.version is consistent with detected
                 // major version
                 version = "" + detectedMajorVersion + ".0";
-            }
-
-            if (version == null) {
-                if (output.isPhantomJS) {
-                    if (/phantomjs[\/\s]((?:\d+\.?)+)/ig.test(output.ua)) {
-                        version = RegExp.$1;
-                    }
-                }
             }
 
             // ----------------------------------------------- major version (2)
@@ -1234,6 +1233,7 @@ module.exports = Aria.classDefinition({
             this.isIE11 = false;
             this.isOldIE = false;
             this.isModernIE = false;
+            this.isEdge = false;
             this.isFirefox = false;
             /* BACKWARD-COMPATIBILITY-BEGIN (GitHub #1397) */
             this._isFF = false;

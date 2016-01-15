@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ var ariaCoreBrowser = require("../../core/Browser");
 var ariaWidgetsWidgetTrait = require("../WidgetTrait");
 var ariaWidgetsWidget = require("../Widget");
 var ariaUtilsJson = require("../../utils/Json");
-
 
 /**
  * Base class for all input widgets. Manage input data structure and properties, as well as the label support
@@ -80,6 +79,12 @@ module.exports = Aria.classDefinition({
          * @protected
          */
         this._label = null;
+
+        /**
+         * LabelId
+         * @type String
+         */
+        this._labelId = (this._cfg.waiAria && !this._cfg.hideLabel) ? this._createDynamicId() : null;
 
         /**
          * Flag for input that has to be displayed in full width
@@ -148,6 +153,46 @@ module.exports = Aria.classDefinition({
             if (lbl) {
                 this._initLabelMarkup(lbl);
             }
+        },
+
+        /**
+         * Gets a labelled element, should be overwritten by the child classes.
+         */
+        _getLabelledElement : function () {
+            // overwrite from the child classes
+        },
+
+        /**
+         * Updates the aria-label attribute on the DOM element if accessibility is enabled.
+         */
+        _updateAriaLabel : function () {
+            var element = this._getLabelledElement();
+            if (element) {
+                var ariaLabel = this._cfg.label;
+                if (ariaLabel != null) {
+                    element.setAttribute("aria-label", ariaLabel);
+                } else {
+                    element.removeAttribute("aria-label");
+                }
+            }
+        },
+
+        /**
+         * Returns the markup for aria-labelledby attribute on the DOM element if accessibility is enabled.
+         * @protected
+         */
+        _getAriaLabelMarkup : function () {
+            if (this._cfg.waiAria) {
+                if (this._labelId) {
+                    return ' aria-labelledby="' + this._labelId + '" ';
+                } else {
+                    var ariaLabel = this._cfg.label;
+                    if (ariaLabel != null) {
+                        return ' aria-label="' + ariaUtilsString.encodeForQuotedHTMLAttribute(ariaLabel) + '" ';
+                    }
+                }
+            }
+            return '';
         },
 
         /**
@@ -280,10 +325,13 @@ module.exports = Aria.classDefinition({
          */
         _inputLabelMarkup : function (out, cssDisplay, margin) {
             var cfg = this._cfg;
+            var labelId = (this._labelId) ? 'id="' + this._labelId + '" ' : '';
+
             // PTR04951216 skinnable labels
-            var cssClass = 'class="x' + this._skinnableClass + '_' + cfg.sclass + '_' + this._state + '_label' + this._getFloatingLabelClass() + '"';
+            var cssClass = 'class="x' + this._skinnableClass + '_' + cfg.sclass + '_' + this._state + '_label'
+                    + this._getFloatingLabelClass() + '"';
             var IE7Align = ariaCoreBrowser.isIE7 ? "-25%" : (cfg.verticalAlign) ? cfg.verticalAlign : "middle";
-            out.write('<label ' + cssClass + ' style="');
+            out.write('<label ' + labelId + cssClass + ' style="');
             if (!ariaWidgetsEnvironmentWidgetSettings.getWidgetSettings().middleAlignment) {
                 out.write('vertical-align:-1px;');
             } else {
@@ -333,7 +381,8 @@ module.exports = Aria.classDefinition({
         _updateLabelState : function () {
             var label = this.getLabel();
             if (label) {
-                label.className = 'x' + this._skinnableClass + '_' + this._cfg.sclass + '_' + this._state + '_label' + this._getFloatingLabelClass();
+                label.className = 'x' + this._skinnableClass + '_' + this._cfg.sclass + '_' + this._state + '_label'
+                        + this._getFloatingLabelClass();
             }
         },
 
@@ -448,6 +497,9 @@ module.exports = Aria.classDefinition({
                 var label = this.getLabel();
                 if (label) {
                     label.innerHTML = ariaUtilsString.escapeHTML(newValue);
+                } else if (this._cfg.waiAria) {
+                    // check WAI flag for label attributes to be updated
+                    this._updateAriaLabel();
                 }
             }
             return this.$Widget._onBoundPropertyChange.apply(this, arguments);

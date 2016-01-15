@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,6 +104,19 @@ module.exports = Aria.beanDefinitions({
                     $type : "json:Boolean",
                     $description : "Specifies if today and selected day shortcuts should be displayed",
                     $default : true
+                },
+                "waiAria" : {
+                    $type : "json:Boolean",
+                    $description : "If true, accessibility-related DOM attributes are enabled, to comply with WAI-ARIA specifications. This allows screen readers and other accessibility tools to work better."
+                },
+                "waiAriaDateFormat" : {
+                    $type : "AppCfg:FormatTypes",
+                    $description : "Date pattern to be used for screen readers."
+                },
+                "dayDomIdPrefix": {
+                    $type : "json:String",
+                    $description : "Prefix to use when generating ids for days.",
+                    $default : "day"
                 },
                 "focus" : {
                     $type : "json:Boolean",

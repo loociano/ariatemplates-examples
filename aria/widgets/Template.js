@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -127,6 +127,18 @@ module.exports = Aria.classDefinition({
                     p[key] = src[key];
                 }
             }
+        },
+
+
+        /**
+         * Add custom attributes in the container markup
+         * @extraAttributes String attributes to add in the markup. For example : 'att1="val1" att1="val2"'
+         */
+        addExtraAttributes : function (extraAttributes) {
+            if (this._extraAttributes == null) {
+                this._extraAttributes = "";
+            }
+            this._extraAttributes += " " + extraAttributes;
         },
 
         /**

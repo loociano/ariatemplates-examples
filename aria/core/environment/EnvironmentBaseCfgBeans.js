@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,6 +70,11 @@ module.exports = Aria.beanDefinitions({
                     $type : "json:Boolean",
                     $description : "Indicates if the application is in debug state (strong validation, more error reporting).",
                     $default : Aria.debug
+                },
+                "waiAria" : {
+                    $type : "json:Boolean",
+                    $description : "If true, accessibility-related DOM attributes are enabled, to comply with WAI-ARIA specifications. This allows screen readers and other accessibility tools to work better.",
+                    $default : false
                 }
             }
 

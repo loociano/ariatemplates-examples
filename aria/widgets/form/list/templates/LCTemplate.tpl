@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +24,13 @@
         {var className = _getClassForItem(item)/}
         {var entry = item.object.entry/}
 
-        <a href="javascript:void(0)" class="${className}" data-itemIdx="${itemIdx}" onclick="return false;">
+        <a {if data.waiAria}{id data.listItemDomIdPrefix + itemIdx/} role="option"{/if} href="javascript:void(0)" class="${className}" data-itemIdx="${itemIdx}" onclick="return false;">
             {if ! item.label}
                 &nbsp;
             {elseif item.value.multiWordMatch/}
-                ${item.label|escapeForHTML:{text:true}|highlightfromnewword:entry|escapeForHTML:false}
+                ${item.label|highlightfromnewword:entry|escapeForHTML:false}
             {else/}
-                ${item.label|escapeForHTML:{text:true}|starthighlight:entry|escapeForHTML:false}
+                ${item.label|starthighlight:entry|escapeForHTML:false}
             {/if}
         </a>
     {/macro}

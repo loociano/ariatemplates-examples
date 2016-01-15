@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,8 +75,13 @@ module.exports = Aria.classDefinition({
                 if (cfg.id) {
                     tplCfg.id = cfg.id + "_t_";
                 }
-                this._tplWidget = new ariaWidgetsTemplate(tplCfg, this._context, this._lineNumber);
-                this._tplWidget.tplLoadCallback = {
+                var tplWidget = this._tplWidget = new ariaWidgetsTemplate(tplCfg, this._context, this._lineNumber);
+                var extraAttributes = this._extraAttributes;
+                if (extraAttributes) {
+                    tplWidget.addExtraAttributes(extraAttributes);
+                }
+
+                tplWidget.tplLoadCallback = {
                     fn : this._tplLoadCallback,
                     scope : this
                 };

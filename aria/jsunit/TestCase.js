@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -274,7 +274,7 @@ module.exports = Aria.classDefinition({
          * {Function} callback : callback which will be called when the condition function returns true
          */
         waitFor : function (args) {
-            var delay = args.delay || 250;
+            var delay = args.delay || 25;
             var timeout = args.timeout || 10000;
             var timeoutTime = new Date().getTime() + timeout;
 

@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -451,7 +451,7 @@ module.exports = Aria.classDefinition({
             if (typeof res == "string") {
                 var logicalPath = Aria.getLogicalPath(res);
                 var serverRes = /([^\/]*)\/Res$/.exec(logicalPath);
-                return 'require("ariatemplates/$resources").' + (serverRes ? "module(" + serverRes[1] + "," : "file(")
+                return 'require("ariatemplates/$resources").' + (serverRes ? "module(" + out.stringify(serverRes[1]) + "," : "file(")
                         + out.stringify(logicalPath) + ")";
             }
             if (typeof res == "object") {

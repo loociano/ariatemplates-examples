@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ var ariaWidgetsGlobalStyle = require("./GlobalStyle.tpl.css");
 var ariaWidgetLibsBindableWidget = require("../widgetLibs/BindableWidget");
 var ariaCoreTplClassLoader = require("../core/TplClassLoader");
 var ariaCoreJsonValidator = require("../core/JsonValidator");
+var environment = require("../core/environment/Environment");
 
 /**
  * Base Widget class from which all widgets must derive
@@ -120,9 +121,16 @@ module.exports = Aria.classDefinition({
         /**
          * CSS extra classes for the widget.
          * @protected
-         * @type String
+         * @type Array
          */
         this._extraCssClassNames = [];
+
+        /**
+         * Extra attributes for the widget.
+         * @protected
+         * @type String
+         */
+        this._extraAttributes = "";
 
         /**
          * True if the widget is in the middle of an initialization triggered by a delegated content change event.
@@ -138,6 +146,10 @@ module.exports = Aria.classDefinition({
             if (!ariaWidgetsAriaSkinInterface.checkSkinClassExists(this._skinnableClass, cfg.sclass)) {
                 cfg.sclass = 'std';
             }
+        }
+
+        if (cfg.waiAria == null) {
+            cfg.waiAria = environment.isWaiAria();
         }
 
         var bindings = cfg.bind;
@@ -363,6 +375,7 @@ module.exports = Aria.classDefinition({
                     scope : this
                 });
             }
+            out.write(this._extraAttributes);
 
             out.write(delegateManager.getMarkup(this._delegateId) + " ");
 

@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1030,7 +1030,7 @@ require("./Dom");
                         if ( Aria.$window.selenium ) {
                             Aria["eval"]("with(selenium.browserbot.getCurrentWindow()){" + code + "}");
                         } else {
-                            Aria["eval"]("with(scope){" + code + "}");
+                            Aria["eval"]("with(arguments[2]){" + code + "}", null, scope);
                         }
                     }
                 }

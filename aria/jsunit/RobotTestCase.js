@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,14 +52,10 @@ module.exports = Aria.classDefinition({
          */
         run : function () {
             var robot = ariaJsunitRobot;
-
             if (!this.skipTest && !robot.isUsable()) {
                 this._startTest();
-                var isOldFirefox = (aria.core.Browser.isFirefox && aria.core.Browser.majorVersion < 4);
-                if (!isOldFirefox) {
-                    this._currentTestName = 'RobotTestCase:run';
-                    this.raiseFailure('The robot is not usable');
-                }
+                this._currentTestName = 'RobotTestCase:run';
+                this.raiseFailure('The robot is not usable');
                 this._endTest();
             } else {
                 this.$TemplateTestCase.run.call(this);

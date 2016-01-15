@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,13 @@ var ariaWidgetsFormCheckBox = require("./CheckBox");
             // use array and not store as index is important
             if (!this._cfg.disabled) {
                 this._instances.push(this);
+            }
+
+            this._waiAriaAttributes = "";
+            if (this._cfg.waiAria) {
+                this[this._skinObj.simpleHTML ? "_waiAriaAttributes" : "_extraAttributes"] =
+                    this._getAriaLabelMarkup() + 'role="radio" aria-disabled="' + this._cfg.disabled + '" ' +
+                    'aria-checked="' + this._isChecked() + '"';
             }
         },
 
@@ -155,6 +162,18 @@ var ariaWidgetsFormCheckBox = require("./CheckBox");
             },
 
             /**
+             * Internal method to handle the focus event
+             * @param {aria.DomEvent} event Focus
+             * @protected
+             */
+            _dom_onfocus : function (event) {
+                if (!this.getProperty("value")) {
+                    this._setRadioValue();
+                }
+                this.$CheckBox._dom_onfocus.call(this, event);
+            },
+
+            /**
              * Find next valid radio button to activate
              * @protected
              * @param {Number} direction, 1 or -1
@@ -167,9 +186,17 @@ var ariaWidgetsFormCheckBox = require("./CheckBox");
                 var currentBinding = this._cfg.bind.value;
                 var index = ariaUtilsArray.indexOf(this._instances, this), radioButtonNb = this._instances.length;
                 var bindings, next, nextBinding;
+                var waiAria = this._cfg.waiAria;
                 while (index > 0 || index < radioButtonNb) {
                     index = index + direction;
-                    if (index < 0 || index >= radioButtonNb) {
+                    if (waiAria) {
+                        if (index < 0) {
+                            index = radioButtonNb - 1;
+                        } else if (index >= radioButtonNb) {
+                            index = 0;
+                        }
+
+                    } else if (index < 0 || index >= radioButtonNb) {
                         break;
                     }
                     next = this._instances[index];
@@ -186,6 +213,32 @@ var ariaWidgetsFormCheckBox = require("./CheckBox");
                         }
                     }
                 }
+            },
+
+            /**
+             * Internal method to change the state of the checkbox
+             * @protected
+             */
+            _updateDomForState : function () {
+                if (this._cfg.waiAria) {
+                    // update the attributes for WAI
+                    var element = this._getFocusableElement();
+                    element.setAttribute('tabindex', this._calculateTabIndex());
+                }
+
+                this.$CheckBox._updateDomForState.call(this);
+            },
+
+            /**
+             * Calculates the real tab index from configuration parameters given to the widget. Only valid to call if
+             * baseTabIndex and tabIndex are correctly set, otherwise method will return -1.
+             * @protected
+             * @return {Number}
+             */
+            _calculateTabIndex : function () {
+                return (this._isChecked() || !this.getProperty("value")) ?
+                        this.$CheckBox._calculateTabIndex.call(this) :
+                        -1;
             },
 
             /**

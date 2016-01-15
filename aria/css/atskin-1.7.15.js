@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -368,7 +368,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "offsetTop": 1,
                     "iconsLeft": "",
@@ -580,7 +581,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "color": "gray",
-                        "italics": true
+                        "italics": true,
+                        "font": {}
                     },
                     "frame": {
                         "frameType": "SimpleHTML"
@@ -882,7 +884,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "offsetTop": 1,
                     "iconsLeft": "",
@@ -1282,7 +1285,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "simpleHTML": false,
                     "label": {
@@ -2322,7 +2326,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "offsetTop": 1,
                     "innerPaddingLeft": 0,
@@ -2634,7 +2639,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "offsetTop": 1,
                     "iconsLeft": "",
@@ -2784,7 +2790,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "color": "gray",
-                        "italics": true
+                        "italics": true,
+                        "font": {}
                     },
                     "innerPaddingTop": 0,
                     "innerPaddingRight": 0,
@@ -2801,7 +2808,8 @@ Aria.classDefinition({
                     "simpleHTML": false,
                     "helpText": {
                         "color": "gray",
-                        "italics": true
+                        "italics": true,
+                        "font": {}
                     },
                     "innerPaddingTop": 0,
                     "innerPaddingRight": 0,
@@ -3074,7 +3082,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "color": "gray",
-                        "italics": true
+                        "italics": true,
+                        "font": {}
                     },
                     "innerPaddingTop": 0,
                     "innerPaddingRight": 0,
@@ -3428,7 +3437,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "innerPaddingLeft": 2,
                     "innerPaddingBottom": 0,
@@ -4102,7 +4112,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "color": "gray",
-                        "italics": true
+                        "italics": true,
+                        "font": {}
                     },
                     "innerPaddingTop": 0,
                     "innerPaddingRight": 0,
@@ -4236,7 +4247,8 @@ Aria.classDefinition({
                     "iconsRight": "dropdown",
                     "helpText": {
                         "color": "gray",
-                        "italics": true
+                        "italics": true,
+                        "font": {}
                     },
                     "innerPaddingTop": 0,
                     "innerPaddingRight": 0,
@@ -4838,7 +4850,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "color": "gray",
-                        "italics": true
+                        "italics": true,
+                        "font": {}
                     },
                     "innerPaddingTop": 0,
                     "innerPaddingRight": 0,
@@ -5141,7 +5154,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "offsetTop": 1,
                     "listSclass": "dropdown",
@@ -5486,7 +5500,8 @@ Aria.classDefinition({
                     },
                     "helpText": {
                         "italics": true,
-                        "color": "gray"
+                        "color": "gray",
+                        "font": {}
                     },
                     "offsetTop": 1,
                     "optionsBackgroundColor": "#E4E4E4",

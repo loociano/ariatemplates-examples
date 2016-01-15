@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@ var Aria = require("../../Aria");
 var ariaUtilsScriptLoader = require("../../utils/ScriptLoader");
 var ariaMapProvidersIMapProvider = require("./IMapProvider");
 var ariaUtilsJson = require("../../utils/Json");
-
 
 /**
  * Load the bing 7 dependencies and creates map instances
@@ -60,8 +59,10 @@ module.exports = Aria.classDefinition({
                     that._afterLoad.apply(that);
                     that = null;
                 };
-                ariaUtilsScriptLoader.load(["http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0&mkt=en-US&onscriptload=__bing7MapLoadCallback"]);
-
+                var url = "://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0&mkt=en-US&onscriptload=__bing7MapLoadCallback";
+                var https = "https:" == Aria.$window.document.location.protocol;
+                url = "http" + (https ? "s" : "") + url + (https ? "&s=1" : "");
+                ariaUtilsScriptLoader.load([url]);
             }
         },
 

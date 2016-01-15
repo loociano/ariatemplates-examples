@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -474,16 +474,27 @@ var ariaCoreJsonValidator = require("../../core/JsonValidator");
              * @return {aria.widgets.controllers.reports.DropDownControllerReport}
              */
             toggleDropdown : function (displayValue, currentlyOpen) {
-                this._resourcesHandler.getAllSuggestions({
-                    fn : this._suggestionsCallback,
-                    scope : this,
-                    args : {
-                        nextValue : displayValue,
-                        triggerDropDown : !currentlyOpen,
-                        keepSelectedValue : true,
-                        allSuggestions : true
-                    }
-                });
+                var self = this;
+                if (currentlyOpen) {
+                    var report = new ariaWidgetsControllersReportsDropDownControllerReport(), dataModel = this._dataModel;
+                    report.displayDropDown = false;
+                    report.value = dataModel.value;
+                    report.text = dataModel.text;
+                    return report;
+                } else {
+                    setTimeout(function () {
+                        self._resourcesHandler.getAllSuggestions({
+                            fn : self._suggestionsCallback,
+                            scope : self,
+                            args : {
+                                nextValue : displayValue,
+                                triggerDropDown : !currentlyOpen,
+                                keepSelectedValue : true,
+                                allSuggestions : true
+                            }
+                        });
+                    }, 1);
+                }
             },
 
             /**

@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -182,6 +182,11 @@ module.exports = Aria.classDefinition({
         _skinnableClass : "TextInput",
 
         /**
+         * Extra attributes to put on the input/textarea element.
+         */
+        _extraInputAttributes : "",
+
+        /**
          * Prototype init method called at prototype creation time Allows to store class-level objects that are shared
          * by all instances
          * @param {Object} p the prototype object being built
@@ -217,6 +222,13 @@ module.exports = Aria.classDefinition({
         _onLabelClick : function (evt) {
             this.$InputWithFrame._onLabelClick.call(this, evt);
             ariaUtilsCaret.select(this.getTextInputField());
+        },
+
+        /**
+         * Gets a labelled element.
+         */
+        _getLabelledElement : function () {
+            return this.getTextInputField();
         },
 
         /**
@@ -300,26 +312,21 @@ module.exports = Aria.classDefinition({
          * @protected
          */
         _inputWithFrameMarkup : function (out) {
-            var cfg = this._cfg, skinObj = this._skinObj, hts = this._helpTextSet, htc = this._skinObj.helpText, color = this._getTextFieldColor();
+            var cfg = this._cfg, hts = this._helpTextSet, htc = this._skinObj.helpText, color = this._getTextFieldColor();
             var stringUtils = ariaUtilsString;
-
-            var inlineStyle = ['padding:', skinObj.innerPaddingTop, 'px ', skinObj.innerPaddingRight, 'px ',
-                    skinObj.innerPaddingBottom, 'px ', skinObj.innerPaddingLeft, 'px;position:relative;margin:0;'];
-            if (!this._simpleHTML) {
-                inlineStyle.push("background-color:transparent;border-width:0px;vertical-align:top;");
-            }
 
             // check value to set appropriate state and text
             var text = this._getText();
-
+            var className = "xTextInputInput x" + this._skinnableClass + "_" + cfg.sclass + "_input";
             if (hts) {
                 // FIXME : re-activate helpText in password field in IE
                 if (this._isIE7OrLess && this._isPassword) {
                     this._helpTextSet = hts = false;
                     cfg.helptext = null;
                 } else {
-                    color = htc.color + (htc.italics ? ";font-style:italic" : "");
+                    color = htc.color;
                 }
+                className += " x" + this._skinnableClass + "_" + cfg.sclass + "_helpText";
             }
             var type = this._isPassword && !hts ? "password" : "text";
 
@@ -334,25 +341,28 @@ module.exports = Aria.classDefinition({
                 spellCheck = ' spellcheck="' + (cfg.spellCheck ? "true" : "false") + '"';
             }
 
+            var ariaRequired = (cfg.waiAria && cfg.mandatory) ? ' aria-required' : '';
+
             if (this._isTextarea) {
-                out.write(['<textarea', Aria.testMode ? ' id="' + this._domId + '_textarea"' : '',
-                        cfg.disabled ? ' disabled="disabled"' : cfg.readOnly ? ' readonly="readonly"' : '', ' type="',
-                        type, '" style="', inlineStyle.join(''), 'color:', color,
+                out.write(['<textarea class="', className, '"', Aria.testMode ? ' id="' + this._domId + '_textarea"' : '',
+                        cfg.disabled ? ' disabled="disabled"' : cfg.readOnly ? ' readonly="readonly"' : '',
+                        ariaRequired, ' type="', type, '" style="color:', color,
                         ';overflow:auto;resize:none;height: ' + this._frame.innerHeight + 'px; width:', inputWidth,
                         'px;"', 'value=""', (cfg.maxlength > -1 ? 'maxlength="' + cfg.maxlength + '" ' : ' '),
                         (cfg.tabIndex != null ? 'tabindex="' + this._calculateTabIndex() + '" ' : ' '), spellCheck,
-                        '>', stringUtils.escapeHTML(((this._helpTextSet) ? cfg.helptext : text) || ""),
-                        '</textarea>'
+                        this._getAriaLabelMarkup(), this._extraInputAttributes, '>',
+                        stringUtils.escapeHTML(((this._helpTextSet) ? cfg.helptext : text) || ""), '</textarea>'
 
                 ].join(''));
             } else {
-                out.write(['<input class="xTextInputInput" ', Aria.testMode ? ' id="' + this._domId + '_input"' : '',
-                        cfg.disabled ? ' disabled="disabled"' : cfg.readOnly ? ' readonly="readonly"' : '', ' type="',
-                        type, '" style="', inlineStyle.join(''), 'color:', color, ';width:', inputWidth, 'px;"',
-                        'value="', stringUtils.encodeForQuotedHTMLAttribute((this._helpTextSet) ? cfg.helptext : text),
-                        '" ', (cfg.maxlength > -1 ? 'maxlength="' + cfg.maxlength + '" ' : ' '),
+                out.write(['<input class="', className, '"', Aria.testMode ? ' id="' + this._domId + '_input"' : '',
+                        cfg.disabled ? ' disabled="disabled"' : cfg.readOnly ? ' readonly="readonly"' : '',
+                        ariaRequired, ' type="', type, '" style="color:', color, ';width:',
+                        inputWidth, 'px;"', 'value="',
+                        stringUtils.encodeForQuotedHTMLAttribute((this._helpTextSet) ? cfg.helptext : text), '" ',
+                        (cfg.maxlength > -1 ? 'maxlength="' + cfg.maxlength + '" ' : ' '),
                         (cfg.tabIndex != null ? 'tabindex="' + this._calculateTabIndex() + '" ' : ' '), spellCheck,
-                        ' _ariaInput="1"/>'
+                        this._getAriaLabelMarkup(), this._extraInputAttributes, ' _ariaInput="1"/>'
                 // the _ariaInput attribute is present so that pressing
                 // ENTER on this widget raises the onSubmit event of
                 // the fieldset:
@@ -628,9 +638,9 @@ module.exports = Aria.classDefinition({
         },
 
         /**
-         * Compare newValue with the one stored in _cfg[propertyName].
-         * Can be overridden to have a specific comparison.
-         * Two values are considered equal if they are strictly equal, or if they are both either null or undefined (we consider them as being "void").
+         * Compare newValue with the one stored in _cfg[propertyName]. Can be overridden to have a specific comparison.
+         * Two values are considered equal if they are strictly equal, or if they are both either null or undefined (we
+         * consider them as being "void").
          * @param {String} propertyName
          * @param {MultiTypes} newValue If transformation is used, this should be the widget value and not the data
          * model value
@@ -751,6 +761,16 @@ module.exports = Aria.classDefinition({
                         this._validationPopupHide();
                     }
                 }
+
+                if (cfg.waiAria && propertyName === 'mandatory') {
+                    var input = this.getTextInputField();
+                    if (newValue) {
+                        input.setAttribute("aria-required", "");
+                    } else {
+                        input.removeAttribute("aria-required");
+                    }
+                }
+
             } else if (propertyName == "prefill") {
                 this.setPrefillText(true, newValue, true);
             } else if (propertyName == "prefillError") {
@@ -838,6 +858,15 @@ module.exports = Aria.classDefinition({
                 // the recently changed cfg object
                 inputElm.readOnly = this._cfg.readOnly;
                 inputElm.disabled = this._cfg.disabled;
+
+                if (this._cfg.waiAria) {
+                    if (this._cfg.formatError || this._cfg.error) {
+                        inputElm.setAttribute("aria-invalid", "");
+                    } else {
+                        inputElm.removeAttribute("aria-invalid");
+                    }
+                }
+
             }
         },
 
@@ -1149,13 +1178,19 @@ module.exports = Aria.classDefinition({
 
             // determine new styles and value
             var color = enable ? helpTextConfig.color : this._getTextFieldColor();
-            var fontStyle = enable && helpTextConfig.italics ? "italic" : "normal";
             var value = enable ? helpText : "";
+
+            var helpTextClass = "x" + this._skinnableClass + "_" + cfg.sclass + "_helpText";
+            var classNames = field.className.split(/\s+/);
+            ariaUtilsArray.remove(classNames, helpTextClass);
+            if (enable) {
+                classNames.push(helpTextClass);
+            }
+            field.className = classNames.join(' ');
 
             // update styles
             var style = field.style;
             style.color = color;
-            style.fontStyle = fontStyle;
 
             // update field value
             field.value = value;
@@ -1226,7 +1261,9 @@ module.exports = Aria.classDefinition({
             textInputField.focus();
             // IE FIX: requires the value to be reset for the cursor to be positioned
             // and focused at the end of the textinput.value string
-            textInputField.value = textInputField.value;
+            if (ariaCoreBrowser.isIE) {
+              textInputField.value = textInputField.value;
+            }
 
             if (!fromSelf) {
                 // IE FIX: the focus() can be asynchronous, so let's add a timeout to manage the autoselect

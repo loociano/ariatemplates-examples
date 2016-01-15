@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -136,6 +136,18 @@ module.exports = Aria.beanDefinitions({
                     $type : "animation:AnimationName",
                     $description : "When the popup is being opened, the animation is applied",
                     $sample : "slide left"
+                },
+                "popupContainer" : {
+                    $type : "json:ObjectRef",
+                    $description : "[Optional] Object implementing the IPopupContainer interface, which defines in which container the popup will be added. By default, the aria.popups.container.Viewport singleton is used and the popup is a direct child of document.body."
+                },
+                "role" : {
+                    $type : "json:String",
+                    $description : "The role attribute to add to the container, if wai is activated"
+                },
+                "waiAria" : {
+                    $type : "json:Boolean",
+                    $description : "If true, accessibility-related DOM attributes are enabled on this container, adding the role attribute if defined."
                 }
             }
         },

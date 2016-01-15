@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ var ariaUtilsJson = require("../../../utils/Json");
 require("./ListController");
 var ariaWidgetsFormListListStyle = require("./ListStyle.tpl.css");
 var ariaWidgetsTemplateBasedWidget = require("../../TemplateBasedWidget");
-
+var ariaTemplatesDomEventWrapper = require("../../../templates/DomEventWrapper");
 
 /**
  * A simple list of selectable items
@@ -68,7 +68,8 @@ module.exports = Aria.classDefinition({
                         numberOfRows : cfg.numberOfRows,
                         skin : skinObj,
                         cfg : divCfg,
-                        preselect : cfg.preselect
+                        preselect : cfg.preselect,
+                        waiAria : cfg.waiAria
                     }
                 }
             }
@@ -184,6 +185,16 @@ module.exports = Aria.classDefinition({
         },
 
         /**
+         * Mousedown event
+         * @param {aria.DomEvent} domEvt Mousedown event
+         */
+        _dom_onmousedown : function (event) {
+            var domEvtWrapper = new ariaTemplatesDomEventWrapper(event);
+            this.evalCallback(this._cfg.onmousedown, domEvtWrapper);
+            domEvtWrapper.$dispose();
+        },
+
+        /**
          * DOM callback function called on key down
          */
         _dom_onkeydown : function (event) {
@@ -293,6 +304,30 @@ module.exports = Aria.classDefinition({
                 this._onBoundPropertyChange(propertyName, newValue, oldValue);
             } else {
                 this.$TemplateBasedWidget.setWidgetProperty.apply(this, arguments);
+            }
+        },
+
+        /**
+         * Returns the id of the root DOM element containing the list.
+         * @return {String} id of the root DOM element containing the list.
+         */
+        getListDomId : function () {
+            return this._tplWidget.getDom().id;
+        },
+
+        /**
+         * Returns the id of the DOM element corresponding to the item in the list at the given index.
+         * This method only works if accessibility was enabled at the time the list widget was created.
+         * @param {Integer} optionIndex index of the item whose id should be returned
+         * @return {String} id of the DOM element or undefined if the list is not fully loaded yet, accessibility
+         * is disabled or the index is invalid
+         */
+        getOptionDomId : function (optionIndex) {
+            if (this._subTplCtxt) {
+                var data = this._subTplModuleCtrl.getData();
+                if (data.waiAria && optionIndex > -1 && optionIndex < data.items.length) {
+                    return this._subTplCtxt.$getId(data.listItemDomIdPrefix + optionIndex);
+                }
             }
         }
     }

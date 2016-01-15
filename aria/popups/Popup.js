@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,8 @@ var ariaUtilsArray = require("../utils/Array");
 var ariaCoreBrowser = require("../core/Browser");
 var ariaCoreTimer = require("../core/Timer");
 var ariaCoreJsonValidator = require("../core/JsonValidator");
-
+var ViewportPopupContainer = require("./container/Viewport");
+var environment = require("../core/environment/Environment");
 
 /**
  * Popup instance
@@ -97,6 +98,12 @@ module.exports = Aria.classDefinition({
         });
 
         /**
+         * Popup container object.
+         * @type aria.popups.container.IPopupContainer
+         */
+        this.popupContainer = null;
+
+        /**
          * Popup dom element
          * @type HTMLElement
          */
@@ -153,18 +160,11 @@ module.exports = Aria.classDefinition({
         this._ignoreClicksOn = null;
 
         /**
-         * Stores the old "overflow" style of the root element (overflow hidden is used for the modal dialog)
+         * Stores the old "overflow" style of the container element (overflow hidden is used for the modal dialog)
          * @protected
          * @type String
          */
-        this._rootElementOverflow = -1;
-
-        /**
-         * Root element on which the style changes should be done
-         * @protected
-         * @type HTMLElement
-         */
-        this._rootElement = ariaUtilsDom.getDocumentScrollElement();
+        this._containerOverflow = -1;
 
         /**
          * Used to display the popup
@@ -177,16 +177,6 @@ module.exports = Aria.classDefinition({
          * @type aria.utils.css.Animations
          */
         this._maskAnimator = null;
-
-        // PTR 04893174 was rolled back for release 1.1-13 because it introduces
-        // a regression on Airrail.
-        // TO BE FIXED LATER
-        // PTR 04893174: do not set this._rootElement = document.body on
-        // Firefox, as it resets all scrolling
-        // position when changing the overflow style
-        // PTR 05210073: the changes reverted for PTR 04893174 were put back in
-        // place and the code changes in order to
-        // fix the regression were implemented
 
         /**
          * Document where the popup is displayed.
@@ -221,6 +211,7 @@ module.exports = Aria.classDefinition({
             ariaUtilsDom.removeElement(this.domElement);
             this.domElement = null;
         }
+        this.popupContainer = null;
         this.conf.domReference = null;
         this._parentDialog = null;
         this._ignoreClicksOn = null;
@@ -249,6 +240,10 @@ module.exports = Aria.classDefinition({
 
             this.conf = conf;
 
+            if (conf.waiAria == null) {
+                conf.waiAria = environment.isWaiAria();
+            }
+
             ariaCoreJsonValidator.normalize({
                 json : conf,
                 beanName : "aria.popups.Beans.PopupConf"
@@ -258,6 +253,7 @@ module.exports = Aria.classDefinition({
                 ariaUtilsDom.removeElement(this.modalMaskDomElement);
                 this.modalMaskDomElement = null;
             }
+            this.popupContainer = (conf.popupContainer || ViewportPopupContainer).$interface("aria.popups.container.IPopupContainer");
             if (conf.modal) {
                 this.modalMaskDomElement = this._createMaskDomElement(conf.maskCssClass);
             }
@@ -316,15 +312,25 @@ module.exports = Aria.classDefinition({
          */
         _createDomElement : function () {
             var document = this._document;
+            var cfg = this.conf;
             var div = document.createElement("div");
             div.style.cssText = "position:absolute;top:-15000px;left:-15000px;";
             document.body.appendChild(div);
-            div.innerHTML = "<div " + ariaUtilsDelegate.getMarkup(this._delegateId)
-                    + " style='position:absolute;top:-15000px;left:-15000px;visibility:hidden;display:block;'></div>";
+            var html = [
+                 "<div ",
+                 ariaUtilsDelegate.getMarkup(this._delegateId),
+                 ' style="position:absolute;top:-15000px;left:-15000px;visibility:hidden;display:block;"'
+            ];
+            var role = cfg.role;
+            if (cfg.waiAria && role) {
+                html.push(' role="' + role + '"');
+            }
+            html.push("></div>");
+            div.innerHTML = html.join('');
+
             var domElement = div.firstChild;
             document.body.removeChild(div);
-            document.body.appendChild(domElement);
-            return domElement;
+            return this.popupContainer.getContainerElt().appendChild(domElement);
         },
 
         /**
@@ -338,7 +344,7 @@ module.exports = Aria.classDefinition({
             var div = document.createElement("div");
             div.className = className || "xModalMask-default";
             div.style.cssText = "position:absolute;top:-15000px;left:-15000px;visibility:hidden;display:block;";
-            return document.body.appendChild(div);
+            return this.popupContainer.getContainerElt().appendChild(div);
         },
 
         /**
@@ -463,29 +469,30 @@ module.exports = Aria.classDefinition({
             var position, isInViewSet;
             if (this.conf.maximized) {
                 var offset = this.conf.offset;
+                var containerScroll = this.popupContainer.getContainerScroll();
                 position = {
-                    top : -offset.top,
-                    left : -offset.left
+                    top : containerScroll.scrollTop - offset.top,
+                    left : containerScroll.scrollLeft - offset.left
                 };
             } else if (this.conf.center) {
                 // apply the offset (both left and right, and also top and bottom)
-                // before centering the whole thing in the viewport
+                // before centering the whole thing in the container
                 var offset = this.conf.offset;
                 var newSize = {
                     width : size.width + offset.left + offset.right,
                     height : size.height + offset.top + offset.bottom
                 };
-                position = ariaUtilsDom.centerInViewport(newSize, this.reference);
-                position = ariaUtilsDom.fitInViewport(position, newSize, this.reference);
+                position = this.popupContainer.centerInside(newSize, this.reference);
+                position = this.popupContainer.fitInside(position, newSize, this.reference);
             } else {
                 var i = 0, preferredPosition;
                 do {
                     preferredPosition = this.preferredPositions[i];
                     // Calculate position for a given anchor
                     position = this._getPositionForAnchor(preferredPosition, size);
-                    // If this position+size is out of the viewport, try the
+                    // If this position+size is out of the container, try the
                     // next anchor available
-                    isInViewSet = ariaUtilsDom.isInViewport(position, size);
+                    isInViewSet = this.popupContainer.isInside(position, size);
                     i++;
                 } while (!isInViewSet && this.preferredPositions[i]);
 
@@ -493,11 +500,11 @@ module.exports = Aria.classDefinition({
                     name : "onPositioned"
                 };
 
-                // If all anchors setting were out of the viewport, fallback
+                // If all anchors setting were out of the container, fallback
                 if (!isInViewSet) {
                     // Currently simply fallback to first anchor ...
                     position = this._getPositionForAnchor(this.preferredPositions[0], size);
-                    position = ariaUtilsDom.fitInViewport(position, size);
+                    position = this.popupContainer.fitInside(position, size);
                 } else {
                     positionEvent.position = this.preferredPositions[i - 1];
                 }
@@ -560,13 +567,13 @@ module.exports = Aria.classDefinition({
                 left = left + offset.left;
             }
 
-            // add scroll of document from absolute positioning
-            var documentScroll = ariaUtilsDom._getDocumentScroll();
+            // add scroll of container from absolute positioning
+            var containerScroll = this.popupContainer.getContainerScroll();
             if (left != null) {
-                left += documentScroll.scrollLeft;
+                left += containerScroll.scrollLeft;
             }
             if (top != null) {
-                top += documentScroll.scrollTop;
+                top += containerScroll.scrollTop;
             }
 
             // allow mixing of relative and absolute positioning #775
@@ -630,16 +637,9 @@ module.exports = Aria.classDefinition({
                     this.modalMaskDomElement.style.cssText = "position:absolute;display:none";
                 }
 
-                if (this._rootElementOverflow != -1) {
-                    if (ariaCoreBrowser.isFirefox) {
-                        var docScroll = ariaUtilsDom._getDocumentScroll();
-                        this._rootElement.style.overflow = this._rootElementOverflow;
-                        this._rootElement.scrollTop = docScroll.scrollTop;
-                        this._rootElement.scrollLeft = docScroll.scrollLeft;
-                    } else {
-                        this._rootElement.style.overflow = this._rootElementOverflow;
-                    }
-                    this._rootElementOverflow = -1;
+                if (this._containerOverflow != -1) {
+                    this.popupContainer.changeContainerOverflow(this._containerOverflow);
+                    this._containerOverflow = -1;
                 }
             }
         },
@@ -695,32 +695,20 @@ module.exports = Aria.classDefinition({
             // Insure that the top left corner is visible
             if (this.modalMaskDomElement) {
 
-                if (this._rootElementOverflow == -1) {
-                    this._rootElementOverflow = this._rootElement.style.overflow;
-                    if (ariaCoreBrowser.isFirefox) {
-                        var docScroll = ariaUtilsDom._getDocumentScroll();
-                        this._rootElement.style.overflow = "hidden";
-                        this._rootElement.scrollTop = docScroll.scrollTop;
-                        this._rootElement.scrollLeft = docScroll.scrollLeft;
-                    } else {
-                        this._rootElement.style.overflow = "hidden";
-                    }
+                if (this._containerOverflow == -1) {
+                    this._containerOverflow = this.popupContainer.changeContainerOverflow("hidden");
                 }
-                var viewport = ariaUtilsDom._getViewportSize();
+                var containerSize = this.popupContainer.getScrollSize();
 
-                var width = this._rootElement.scrollWidth;
-                var height = this._rootElement.scrollHeight;
-
-                // ensure that all viewport is used
-                height = Math.max(viewport.height, height);
-                width = Math.max(viewport.width, width);
                 // Compute the style after scrollbars are removed from the
-                // document. Thus the dialog can be properly
-                // centered
+                // container. Thus the dialog can be properly centered.
                 this.computedStyle = this._getComputedStyle();
+                if (!this.modalMaskZIndex) {
+                    this.modalMaskZIndex = this.computedStyle.zIndex;
+                }
 
-                this.modalMaskDomElement.style.cssText = ['left:0px;top:0px;', 'width:', width, 'px;', 'height:',
-                        height, 'px;', 'z-index:', this.computedStyle.zIndex, ';', 'position:absolute;display:block;'].join('');
+                this.modalMaskDomElement.style.cssText = ['left:0px;top:0px;', 'width:', containerSize.width, 'px;', 'height:',
+                        containerSize.height, 'px;', 'z-index:', this.modalMaskZIndex, ';', 'position:absolute;display:block;'].join('');
 
                 if (this.conf.animateIn) {
                     this._getMaskAnimator().start("fade", {
@@ -758,7 +746,7 @@ module.exports = Aria.classDefinition({
 
             if (ariaCoreBrowser.isIE7 && !this.isOpen) {
                 // Without the following line, the autocomplete does not initially display its content on IE7:
-                this._document.body.appendChild(this.domElement);
+                this.popupContainer.getContainerElt().appendChild(this.domElement);
             }
 
         },
@@ -920,21 +908,16 @@ module.exports = Aria.classDefinition({
             var domReference = this.reference;
             if (domReference && this.isOpen) {
 
-                var geometry = ariaUtilsDom.getGeometry(domReference);
-                var referenceIsInViewport = geometry && (ariaUtilsDom.isInViewport({
-                    left : geometry.x,
-                    top : geometry.y
-                }, geometry, this.domElement));
+                var position = this.popupContainer.calculatePosition(domReference);
+                var size = {
+                    width: domReference.offsetWidth,
+                    height: domReference.offsetHeight
+                };
+                var referenceIsInContainer = this.popupContainer.isInside(position, size, this.domElement);
 
-                if (referenceIsInViewport) {
-                    this.referencePosition = {
-                        left : geometry.x,
-                        top : geometry.y
-                    };
-                    this.referenceSize = {
-                        width : geometry.width,
-                        height : geometry.height
-                    };
+                if (referenceIsInContainer) {
+                    this.referencePosition = position;
+                    this.referenceSize = size;
                     this.refresh();
                     if (this.domElement && this.domElement.style.visibility === "hidden") {
                         this.domElement.style.visibility = "visible";
@@ -992,8 +975,8 @@ module.exports = Aria.classDefinition({
 
         /**
          * If an absolutePosition was set in the configuration object for this popup, create a virtual reference of the
-         * given position, a size of size(0,0) and no DOM element. The reference position is the viewport, so (0,0) is
-         * top left and not the beginning of the page when scrolled.
+         * given position, a size of size(0,0) and no DOM element. The reference position is the viewport (or another container
+         * depending on popupContainer) so (0,0) is top left and not the beginning of the page when scrolled.
          * @param {Object} position The absolute position which will be used to display the popup
          */
         setPositionAsReference : function (position) {
@@ -1022,7 +1005,7 @@ module.exports = Aria.classDefinition({
         setReference : function (element) {
             var size = ariaUtilsSize.getSize(element), domUtil = ariaUtilsDom;
             domUtil.scrollIntoView(element);
-            var position = domUtil.calculatePosition(element);
+            var position = this.popupContainer.calculatePosition(element);
 
             this.reference = element;
             this.referencePosition = position;
@@ -1046,6 +1029,30 @@ module.exports = Aria.classDefinition({
 
             this.section = section;
             // PROFILING // this.$stopMeasure(profilingId);
+        },
+
+        /**
+         * Sets the zIndex of the popup, and refreshes. The zIndex of the modal mask, if any, is not changed.
+         * This method does nothing if the popup has not already been displayed.
+         * @param {Number} zIndex zIndex to set on the popup.
+         */
+        setZIndex : function (zIndex) {
+            var computedStyle = this.computedStyle;
+            if (computedStyle) {
+                computedStyle.zIndex = zIndex;
+                this.refresh();
+            }
+        },
+
+        /**
+         * Returns the current zIndex of the popup, if it is available.
+         * @return {Number} zIndex of the popup.
+         */
+        getZIndex : function () {
+            var computedStyle = this.computedStyle;
+            if (computedStyle) {
+                return computedStyle.zIndex;
+            }
         },
 
         /**

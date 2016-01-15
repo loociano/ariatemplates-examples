@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,7 +154,9 @@ module.exports = Aria.classDefinition({
                 domReference : this._field,
                 preferredPositions : this._getPreferredPositions(),
                 closeOnMouseClick : true,
-                closeOnMouseScroll : false
+                closeOnMouseScroll : false,
+                role: "alert",
+                waiAria: this._WidgetCfg.waiAria
             });
         },
 

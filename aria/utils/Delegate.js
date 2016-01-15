@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -580,9 +580,7 @@ module.exports = Aria.classDefinition({
                     try {
                         result = callback.call(evt);
                     } catch (e) {
-                        this.$logError(this.DELEGATE_UTIL_CALLBACK_FAIL, [evt.type], {
-                            event : evt
-                        });
+                        this.$logError(this.DELEGATE_UTIL_CALLBACK_FAIL, [evt.type], e);
                     }
                 }
 

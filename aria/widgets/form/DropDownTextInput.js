@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -230,9 +230,9 @@ module.exports = Aria.classDefinition({
          * On touch devices, this method checks the currently focused element and defines this._focusNoKeyboard
          * accordingly. On desktop devices, this method does nothing.
          */
-        _updateFocusNoKeyboard : ariaUtilsDevice.isTouch() ? function () {
+        _updateFocusNoKeyboard : ariaUtilsDevice.isTouch() ? function (forceFocus) {
             var activeElement = Aria.$window.document.activeElement;
-            this._focusNoKeyboard = (activeElement != this.getTextInputField());
+            this._focusNoKeyboard = forceFocus || (activeElement != this.getTextInputField());
         } : Aria.empty,
 
         /**
@@ -247,6 +247,22 @@ module.exports = Aria.classDefinition({
                 widgetDomElt.appendChild(touchFocusSpan);
             }
             touchFocusSpan.focus();
+        },
+
+        /**
+         * Callback for the event onMouseClickClose raised by the popup.
+         * @protected
+         */
+        _dropDownMouseClickClose : function (evt) {
+            var domEvent = evt.domEvent;
+            if (domEvent.target == this.getTextInputField()) {
+                // Clicking on the input should directly give the focus to the input.
+                // Setting this boolean to false prevents the focus from being given
+                // to this._touchFocusSpan when the dropdown is closed (which would
+                // be temporary anyway, but would make Edge fail on DatePickerInputTouchTest)
+                this._focusNoKeyboard = false;
+            }
+            this.$DropDownTrait._dropDownMouseClickClose.call(this, evt);
         },
 
         /**

@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
  */
 var Aria = require("../../Aria");
 var ariaUtilsDom = require("../Dom");
+var environment = require("../../core/environment/Environment");
 
 /**
  * This class creates an overlay and keeps it positioned above a given HTML element
@@ -24,6 +25,19 @@ var ariaUtilsDom = require("../Dom");
 module.exports = Aria.classDefinition({
     $classpath : 'aria.utils.overlay.Overlay',
     $constructor : function (element, params) {
+        /**
+         * Element on which the overlay is applied
+         * @type HTMLElement
+         */
+        this.element = element;
+
+        /**
+         * Environment variable related to WAI-ARIA activation
+         @ @protected
+         * @type Boolean
+         */
+        this._waiAria = environment.isWaiAria();
+
         var overlay = this._createOverlay(params);
 
         /**
@@ -31,12 +45,6 @@ module.exports = Aria.classDefinition({
          * @type HTMLElement
          */
         this.overlay = overlay;
-
-        /**
-         * Element on which the overlay is applied
-         * @type HTMLElement
-         */
-        this.element = element;
 
         this._appendToDOM(overlay);
         this._setInPosition(element, overlay);

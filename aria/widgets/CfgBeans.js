@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -99,6 +99,10 @@ module.exports = Aria.beanDefinitions({
                     $type : "json:Integer",
                     $description : "The tab index of the widget. If null it's not taken into account, if 0 or above the widget will be focusable thorugh tab, if negative it won't be focusable.",
                     $default : null
+                },
+                "waiAria" : {
+                    $type : "json:Boolean",
+                    $description : "If true, and if the widget supports it, accessibility-related DOM attributes are enabled on this widget, to comply with WAI-ARIA specifications. This allows screen readers and other accessibility tools to work better."
                 }
             }
         },
@@ -467,8 +471,8 @@ module.exports = Aria.beanDefinitions({
                     $classpath : "aria.templates.View"
                 },
                 "sortKeyGetter" : {
-                    $type : "json:FunctionRef",
-                    $description : "An anonymous function to pass the field by which we want to sort"
+                    $type : "common:Callback",
+                    $description : "An callback to return the field by which we want to sort. If this property is null, clicking on the sort indicator does not change the sort order, and only calls the onclick callback."
                 },
                 "refreshArgs" : {
                     $type : "json:Array",
@@ -789,6 +793,10 @@ module.exports = Aria.beanDefinitions({
                     $type : "environmentBase:inputFormatTypes",
                     $description : "Date pattern used to match user input and convert it in a Javascript valid date."
                 },
+                "waiAriaDateFormat" : {
+                    $type : "environmentBase:inputFormatTypes",
+                    $description : "Date pattern used by screen readers to read the selected date in the calendar (only used when waiAria is true)."
+                },
                 "minValue" : {
                     $type : "json:Date",
                     $description : "Minimum date for the value property."
@@ -858,8 +866,11 @@ module.exports = Aria.beanDefinitions({
                 },
                 "iconTooltip" : {
                     $type : "json:String",
-                    $description : "Tooltip label for the datepicker icon",
-                    $default : "Open the Calendar"
+                    $description : "Tooltip for the datepicker icon"
+                },
+                "waiAriaCalendarLabel": {
+                    $type : "json:String",
+                    $description : "aria-label to set on the calendar (only used when waiAria is true)."
                 },
                 "bind" : {
                     $type : "DropDownTextInputCfg.bind",
@@ -1655,6 +1666,22 @@ module.exports = Aria.beanDefinitions({
                     $type : "common:Callback",
                     $description : "Function to be called when the selected date or range in the calendar changes because of user action (click or keyboard selection)."
                 },
+                "onfocus" : {
+                    $type : "common:Callback",
+                    $description : "Function to be called when the calendar widget is focused."
+                },
+                "onblur" : {
+                    $type : "common:Callback",
+                    $description : "Function to be called when the calendar widget is blured."
+                },
+                "onkeydown" : {
+                    $type : "common:Callback",
+                    $description : "Function to be called when the user types a key while the widget is focused."
+                },
+                "onmousedown" : {
+                    $type : "common:Callback",
+                    $description : "Function to be called when the user presses the mouse on the calendar."
+                },
                 "minValue" : {
                     $type : "json:Date",
                     $description : "Minimum date for the value property."
@@ -1682,6 +1709,14 @@ module.exports = Aria.beanDefinitions({
                     $description : "First day of the week. 0 = Sunday, ... 6 = Saturday. The null value means that it is set according to the application environment.",
                     $minValue : 0,
                     $maxValue : 6
+                },
+                "waiAriaDateFormat" : {
+                    $type : "environmentBase:inputFormatTypes",
+                    $description : "Date pattern used by screen readers to read the date (only used when waiAria is true)."
+                },
+                "waiAriaLabel": {
+                    $type : "json:String",
+                    $description : "aria-label to set on the whole calendar (only used when waiAria is true)."
                 },
                 "monthLabelFormat" : {
                     $type : "json:String",
@@ -1815,6 +1850,10 @@ module.exports = Aria.beanDefinitions({
                 "onmouseover" : {
                     $type : "common:Callback",
                     $description : "Function to be called when the user moves the mouse over an item in the list."
+                },
+                "onmousedown" : {
+                    $type : "common:Callback",
+                    $description : "Function to be called when the user clicks the mouse in the list."
                 },
                 "bind" : {
                     $type : "WidgetCfg.bind",
@@ -1984,6 +2023,17 @@ module.exports = Aria.beanDefinitions({
                 "resizeend" : {
                     $type : "common:Callback",
                     $description : "Callback called after the dialog resizing ends."
+                },
+                "container" : {
+                    $type : "json:MultiTypes",
+                    $description : "Element which will contain the dialog. It can be specified either by its id or by an HTMLElement object. If not specified, the dialog will be in document.body.",
+                    $contentTypes : [{
+                        $type : "json:String",
+                        $description : "Id of the DOM element which will contain the dialog."
+                    }, {
+                        $type : "json:ObjectRef",
+                        $description : "{HTMLElement} The DOM element which will contain the dialog."
+                    }]
                 }
             }
         },

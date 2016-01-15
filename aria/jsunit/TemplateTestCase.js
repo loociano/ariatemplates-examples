@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -523,6 +523,27 @@ module.exports = Aria.classDefinition({
             if (widget._dropdownPopup) {
                 return widget._dropdownPopup.domElement;
             }
+        },
+
+        /**
+         * Waits for the the given widget to fully display its popup.
+         * @param {String} widgetId
+         * @param {Function} cb : callback which will be called when the popup is fully displayed
+         */
+        waitForDropDownPopup : function (widgetId, cb) {
+            this.waitFor({
+                condition : function () {
+                    var controller = this.getWidgetInstance(widgetId).controller;
+                    var popupWidget;
+                    if (controller && controller.getListWidget) {
+                        popupWidget = controller.getListWidget();
+                    } else if (controller && controller.getCalendar) {
+                        popupWidget = controller.getCalendar();
+                    }
+                    return popupWidget && popupWidget._subTplCtxt;
+                },
+                callback : cb
+            });
         },
 
         /**

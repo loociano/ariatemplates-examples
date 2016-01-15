@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,6 +101,15 @@ module.exports = Aria.beanDefinitions({
                     $description : "strict: for strict highlighting (exact match only), always: for selecting the first item everytime, none: for no highlighting",
                     $enumValues : ["strict", "always", "none"],
                     $default : "none"
+                },
+                "waiAria" : {
+                    $type : "json:Boolean",
+                    $description : "If true, accessibility-related DOM attributes are enabled, to comply with WAI-ARIA specifications. This allows screen readers and other accessibility tools to work better."
+                },
+                "listItemDomIdPrefix" : {
+                    $type : "json:String",
+                    $description : "Prefix to prepend to the index to compute the id (to be passed to the {id .../} statement) of each list item. It is required to put ids on all list items only if waiAria is true.",
+                    $default : "myItem"
                 }
             }
         },

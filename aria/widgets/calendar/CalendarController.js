@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -195,6 +195,9 @@ module.exports = Aria.classDefinition({
             }
             if (!settings.completeDateLabelFormat) {
                 settings.completeDateLabelFormat = ariaUtilsEnvironmentDate.getDateFormats().longFormat;
+            }
+            if (!settings.waiAriaDateFormat) {
+                settings.waiAriaDateFormat = ariaUtilsEnvironmentDate.getDateFormats().longFormat;
             }
             if (settings.firstDayOfWeek == null) { // compare to null because 0 is a valid value
                 settings.firstDayOfWeek = ariaUtilsEnvironmentDate.getFirstDayOfWeek();

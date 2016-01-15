@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -299,7 +299,7 @@ module.exports = Aria.classDefinition({
             this._mousePressed = true;
             this._updateState();
 
-            if (ariaCoreBrowser.isChrome || ariaCoreBrowser.isSafari) {
+            if (ariaCoreBrowser.isChrome || ariaCoreBrowser.isOpera || ariaCoreBrowser.isSafari) {
                 this.currTarget = domEvt.currentTarget;
             }
         },
@@ -313,7 +313,7 @@ module.exports = Aria.classDefinition({
             // TODO: this method should also be called when the mouse button is released, not depending on where it is
             // released
 
-            if (ariaCoreBrowser.isChrome || ariaCoreBrowser.isSafari) {
+            if (ariaCoreBrowser.isChrome || ariaCoreBrowser.isOpera || ariaCoreBrowser.isSafari) {
                 if (this._mousePressed && domEvt.currentTarget == this.currTarget) {
                     // handle an onclick event
                     this._performAction(domEvt);
@@ -351,7 +351,7 @@ module.exports = Aria.classDefinition({
          * @method
          * @private
          */
-        _dom_onclick : (ariaCoreBrowser.isChrome || ariaCoreBrowser.isSafari) ? function (domEvent) {
+        _dom_onclick : (ariaCoreBrowser.isChrome || ariaCoreBrowser.isOpera || ariaCoreBrowser.isSafari) ? function (domEvent) {
             this._keyPressed = false;
             return; // we don't catch onclick's for buttons on chrome & safari. we catch mouseup's instead
         } : function (domEvent) {

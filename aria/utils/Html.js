@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ var ariaTemplatesDomElementWrapper = require("../templates/DomElementWrapper");
 var ariaUtilsString = require("./String");
 var ariaUtilsJson = require("./Json");
 var ariaCoreJsObject = require("../core/JsObject");
-
 
 /**
  * This class contains utilities to manipulate Html elements.
@@ -65,6 +64,14 @@ module.exports = Aria.classDefinition({
                                 } else {
                                     this.$logError(this.INVALID_DATASET_KEY, dataKey);
                                 }
+                            }
+                        }
+                    } else if (key === "aria") {
+                        for (var ariaKey in attribute) {
+                            if (attribute.hasOwnProperty(ariaKey) && !jsonUtils.isMetadata(ariaKey)) {
+                                result.push(" aria-", ariaKey, "=\"");
+                                result.push(stringUtil.encodeForQuotedHTMLAttribute(attribute[ariaKey]));
+                                result.push("\"");
                             }
                         }
                     } else if (whiteList.test(key)) {

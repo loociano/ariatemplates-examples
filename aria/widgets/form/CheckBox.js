@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ var ariaUtilsString = require("../../utils/String");
 var ariaWidgetsFormCheckBoxStyle = require("./CheckBoxStyle.tpl.css");
 var ariaWidgetsFormInput = require("./Input");
 var ariaCoreBrowser = require("../../core/Browser");
-
 
 /**
  * CheckBox widget
@@ -49,8 +48,11 @@ module.exports = Aria.classDefinition({
              * @protected
              */
             this._icon = new ariaWidgetsIcon({
-                icon : this._getIconName(this._state)
+                icon : this._getIconName(this._state),
+                verticalAlign : cfg.verticalAlign
             }, ctxt, lineNumber);
+
+            this._icon.extraAttributes = (this._cfg.waiAria) ? "role='presentation'" : "";
         }
 
         /**
@@ -66,6 +68,13 @@ module.exports = Aria.classDefinition({
          * @type Boolean
          */
         this._mousePressed = false;
+
+        this._waiAriaAttributes = "";
+        if (this._cfg.waiAria) {
+            this[this._skinObj.simpleHTML ? "_waiAriaAttributes" : "_extraAttributes"] =
+                this._getAriaLabelMarkup() + " role='checkbox' aria-disabled='" + this._cfg.disabled + "' " +
+                    'aria-checked=' + this._cfg.value + '" ';
+        }
 
     },
     $destructor : function () {
@@ -125,7 +134,7 @@ module.exports = Aria.classDefinition({
 
                 out.write(['<input style="display:inline-block"', cfg.disabled ? ' disabled' : '',
                         this._isChecked() ? ' checked' : '', ' type="', cfg._inputType, '"', name, ' value="',
-                        cfg.value, '" ' + tabIndex + '/>'].join(''));
+                        cfg.value, '" ', tabIndex, this._waiAriaAttributes, '/>'].join(''));
             } else {
                 this._icon.writeMarkup(out);
                 out.write(['<input', Aria.testMode ? ' id="' + this._domId + '_input"' : '', ' style="display:none"',
@@ -143,7 +152,7 @@ module.exports = Aria.classDefinition({
          */
         _inputLabelMarkup : function (out, cssDisplay, margin) {
             var cfg = this._cfg;
-
+            var labelId = (this._labelId) ? 'id="' + this._labelId + '" ' : '';
             var iconInfo = this._icon ? this._icon.getCurrentIconInfo() : null, lineHeight, color;
             if (iconInfo != null) {
                 lineHeight = iconInfo.height;
@@ -155,25 +164,27 @@ module.exports = Aria.classDefinition({
             out.write('<span style="');
 
             if (this._skinObj.simpleHTML && cssDisplay != "block") {
-                out.write("padding-bottom: 7px;display:inline-block;");
+                out.write("padding-bottom: 7px;");
             }
 
             if (lineHeight && ariaCoreBrowser.isOldIE) {
                 out.write('line-height:' + (lineHeight - 2) + 'px;');
             }
-            var cssClass = 'class="x' + this._skinnableClass + '_' + cfg.sclass + '_' + this._state + '_label"';
-            out.write('vertical-align:middle;"><label ' + cssClass + ' style="display:' + cssDisplay);
 
             if (margin) {
-                out.write(';margin-' + margin + ':' + this._labelPadding + 'px');
+                out.write('margin-' + margin + ':' + this._labelPadding + 'px;');
             }
             if (cfg.labelWidth > -1) {
-                out.write(';width:' + cfg.labelWidth + 'px');
+                out.write('width:' + cfg.labelWidth + 'px;');
             }
+
+            out.write('text-align:' + cfg.labelAlign + ';display:' + cssDisplay + ';');
+            var cssClass = 'class="x' + this._skinnableClass + '_' + cfg.sclass + '_' + this._state + '_label"';
+            out.write('vertical-align:middle;"><label ' + labelId + cssClass + ' style="');
             if (color) {
-                out.write(';color:' + color);
+                out.write('color:' + color + ';');
             }
-            out.write(';text-align:' + cfg.labelAlign + ';">');
+            out.write('">');
             out.write(ariaUtilsString.escapeHTML(cfg.label));
 
             out.write('</label></span>');
@@ -185,7 +196,6 @@ module.exports = Aria.classDefinition({
          */
         _initInputMarkup : function (elt) {
             this._initializeFocusableElement();
-            this._getFocusableElement();
             this._label = null;
             var labels = this.getDom().getElementsByTagName("label");
             if (labels.length > 0) {
@@ -199,6 +209,16 @@ module.exports = Aria.classDefinition({
          */
         _initializeFocusableElement : function () {
             this._focusableElement = this.getDom();
+            if (this._skinObj.simpleHTML) {
+                this._focusableElement = this._focusableElement.getElementsByTagName("input")[0];
+            }
+        },
+
+        /**
+         * Gets a labelled element.
+         */
+        _getLabelledElement : function () {
+            return this._getFocusableElement();
         },
 
         /**
@@ -226,9 +246,8 @@ module.exports = Aria.classDefinition({
                 this._updateDomForState();
             } else if (propertyName === 'disabled') {
                 this._cfg.disabled = newValue;
-                var checkField = this.getDom();
-                var disabledOrReadonly = this.getProperty("disabled") || this.getProperty("readOnly");
-                var tabIndex = disabledOrReadonly ? -1 : this._calculateTabIndex();
+                var checkField = this._getFocusableElement();
+                var tabIndex = this._calculateTabIndex();
                 checkField.tabIndex = tabIndex;
                 this._setState();
                 this._updateDomForState();
@@ -237,6 +256,18 @@ module.exports = Aria.classDefinition({
                 // delegate to parent class
                 this.$Input._onBoundPropertyChange.apply(this, arguments);
             }
+        },
+
+        /**
+         * Calculates the real tab index from configuration parameters given to the widget. Only valid to call if
+         * baseTabIndex and tabIndex are correctly set, otherwise method will return -1.
+         * @protected
+         * @return {Number}
+         */
+        _calculateTabIndex : function () {
+            return this.getProperty("disabled") || this.getProperty("readOnly") ?
+                    -1 :
+                    this.$Input._calculateTabIndex.call(this);
         },
 
         /**
@@ -278,12 +309,17 @@ module.exports = Aria.classDefinition({
             }
 
             var inpEl = this.getDom().getElementsByTagName("input")[0];
-
+            var selected = this._isChecked();
+            if (this._cfg.waiAria) {
+                // update the attributes for WAI
+                var element = this._getFocusableElement();
+                element.setAttribute('aria-checked', selected + '');
+                element.setAttribute('aria-disabled', this.getProperty("disabled"));
+            }
             if (inpEl != null) {
                 // "normal", "normalSelected", "focused", "focusedSelected", "disabled", "disabledSelected",
                 // "readonly",
                 // "readonlySelected"
-                var selected = this._isChecked();
                 inpEl.checked = selected;
                 inpEl.value = selected ? "true" : "false";
                 inpEl.disabled = this.getProperty("disabled");

@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,7 @@ module.exports = Aria.classDefinition({
          */
         _clickOnItem : function (evt) {
             if (this._updateFocusNoKeyboard) {
-                this._updateFocusNoKeyboard();
+                this._updateFocusNoKeyboard(true);
             }
             this._closeDropdown();
             var report = this.controller.checkDropdownValue(evt.value);
@@ -104,6 +104,16 @@ module.exports = Aria.classDefinition({
         },
 
         /**
+         * Callback called when the user called when the user clicks the mouse in the list.
+         * @param {Object} evt object containing information about the element on which the mouse was clicked.
+         * @protected
+         */
+        _listMouseDown : function (evt) {
+            evt.target.setProperty("unselectable", "on");
+            evt.preventDefault(); // prevent the blur when clicking the popup inside the widget
+        },
+
+        /**
          * Callback for the keyevent on List widget. <br />
          * restore the focus on the right item if it does not have the focus, and propagate the key
          * @param {Object} evt object containing keyboard event information (charCode and keyCode). This is not an
@@ -153,6 +163,7 @@ module.exports = Aria.classDefinition({
 
             var listObj = {
                 id : cfg.id,
+                waiAria : cfg.waiAria,
                 defaultTemplate : "defaultTemplate" in options ? options.defaultTemplate : cfg.listTemplate,
                 block : true,
                 sclass : cfg.listSclass || this._skinObj.listSclass,
@@ -170,6 +181,10 @@ module.exports = Aria.classDefinition({
                 },
                 onclose : {
                     fn : this._closeDropdown,
+                    scope : this
+                },
+                onmousedown : {
+                    fn : this._listMouseDown,
                     scope : this
                 },
                 onchange : options.onchange,

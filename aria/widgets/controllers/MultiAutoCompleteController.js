@@ -1,5 +1,5 @@
 /*
- * Aria Templates 1.7.8 - 08 Jun 2015
+ * Aria Templates 1.7.15 - 11 Dec 2015
  *
  * Copyright 2009-2015 Amadeus s.a.s.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ var ariaUtilsString = require("../../utils/String");
 var ariaWidgetsControllersAutoCompleteController = require("./AutoCompleteController");
 var ariaUtilsType = require("../../utils/Type");
 var ariaCoreJsonValidator = require("../../core/JsonValidator");
-
 
 (function () {
 
@@ -386,9 +385,11 @@ var ariaCoreJsonValidator = require("../../core/JsonValidator");
                     }
 
                     var report = new aria.widgets.controllers.reports.DropDownControllerReport();
-                    report.text = nextValue;
-                    report.caretPosStart = args.caretPosStart;
-                    report.caretPosEnd = args.caretPosEnd;
+                    if (!args.avoidChangingText) {
+                        report.text = nextValue;
+                        report.caretPosStart = args.caretPosStart;
+                        report.caretPosEnd = args.caretPosEnd;
+                    }
 
                     report.value = dataModel.value;
                     report.cancelKeyStroke = true;
@@ -498,7 +499,8 @@ var ariaCoreJsonValidator = require("../../core/JsonValidator");
                                 nextValue : nextValue,
                                 triggerDropDown : true,
                                 caretPosStart : caretPosStart,
-                                caretPosEnd : caretPosEnd
+                                caretPosEnd : caretPosEnd,
+                                avoidChangingText : true
                             }
                         });
                     }
