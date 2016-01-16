@@ -5,6 +5,7 @@
     <h1>my iframe!</h1>
     <script>
         window.setTimeout(function(){
+            alert('iframe calling function from parent');
             window.parent.showSpinner.call(this);
         }, 2000);
     </script>

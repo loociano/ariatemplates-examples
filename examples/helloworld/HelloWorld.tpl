@@ -2,10 +2,10 @@
     $classpath: "examples.helloworld.HelloWorld"
 }}
 
-    {macro main()}
+  {macro main()}
 
     <h1>Hello World!</h1>
 
-    {/macro}
+  {/macro}
 
 {/Template}

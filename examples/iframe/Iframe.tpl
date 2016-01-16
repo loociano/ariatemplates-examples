@@ -3,12 +3,12 @@
     $hasScript: true
 }}
 
-    {macro main()}
+  {macro main()}
 
     <h1>Hello World!</h1>
 
     <iframe src="myiframe.html"></iframe>
 
-    {/macro}
+  {/macro}
 
 {/Template}

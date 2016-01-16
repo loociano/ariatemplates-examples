@@ -2,8 +2,8 @@
     $classpath: "examples.macro_libraries.Lib1"
 }}
 
-	{macro sayHello(name)}
-		Library1 says: Hello, ${name}!
-	{/macro}
+  {macro sayHello(name)}
+    Library1 says: Hello, ${name}!
+  {/macro}
 
 {/Library}

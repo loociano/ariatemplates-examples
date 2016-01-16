@@ -3,8 +3,8 @@
     $hasScript : true
 }}
 
-	{macro shoutHello(name)}
-		Library2 says: Hello, ${shout(name)}!
-	{/macro}
+  {macro shoutHello(name)}
+    Library2 says: Hello, ${shout(name)}!
+  {/macro}
 
 {/Library}
