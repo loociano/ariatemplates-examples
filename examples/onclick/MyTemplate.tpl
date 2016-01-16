@@ -4,7 +4,7 @@
 }}
 
   {macro main ()}
-    <div {on click { fn : clickHandler} /}> What time is it?</div>
+    <div {on click { fn : clickHandler} /}> Click me to know what time it is.</div>
   {/macro}
 
 {/Template}

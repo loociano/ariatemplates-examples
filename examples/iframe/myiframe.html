@@ -2,12 +2,13 @@
 <html>
 <head></head>
 <body>
-    <h1>my iframe!</h1>
+    <p>Iframe will call a function from the parent frame in 5 seconds...</p>
+
     <script>
         window.setTimeout(function(){
             alert('iframe calling function from parent');
             window.parent.showSpinner.call(this);
-        }, 2000);
+        }, 5000);
     </script>
 </body>
 </html>

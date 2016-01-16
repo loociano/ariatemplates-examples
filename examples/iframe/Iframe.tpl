@@ -5,7 +5,7 @@
 
   {macro main()}
 
-    <h1>Hello World!</h1>
+    <h1>Parent Frame</h1>
 
     <iframe src="myiframe.html"></iframe>
 
