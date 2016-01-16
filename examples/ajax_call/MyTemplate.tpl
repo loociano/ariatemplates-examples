@@ -1,13 +1,13 @@
 {Template {
-  $classpath : "examples.jsonp_call.MyTemplate",
+  $classpath : "examples.ajax_call.MyTemplate",
   $hasScript : true
 }}
 
   {macro main()}
     {@aria:TextField {
-      label : "Url for JSON-P request",
+      label : "Url for AJAX request",
       labelWidth : 160,
-      width : 500,
+      width : 800,
       bind : {
         value : {
           inside : data,
@@ -21,8 +21,6 @@
       onclick : doRequest
     }/}
 
-    <br />
-    <br />
     {section {
       id : "responseContent",
       macro : "content",
@@ -37,7 +35,9 @@
 
     {if (data.response)}
       <div>
-        ${data.response|escapeForHTML:false}
+        <textarea style="margin: 0px; width: 1024px; height: 768px;">
+          ${data.response}
+        </textarea>
       </div>
     {/if}
 

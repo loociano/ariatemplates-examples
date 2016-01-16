@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>JSONP call</title>
+    <title>AJAX call</title>
     <script type="text/javascript" src="../../aria/ariatemplates-1.7.15.js"></script>
     <script type="text/javascript" src="../../aria/css/atflatskin-1.7.15.js"></script>
   </head>
@@ -9,10 +9,10 @@
   <div id="main"></div>
   <script type="text/javascript">
     Aria.loadTemplate({
-        classpath: "examples.jsonp_call.MyTemplate",
+        classpath: "examples.ajax_call.MyTemplate",
         div: "main",
         data: {
-          url: 'http://jsfiddle.net/echo/jsonp/?my=data'
+          url: 'http://api.flickr.com/services/feeds/photos_public.gne?format=json'
         }
     });
   </script>
