@@ -1,5 +1,5 @@
 {Template {
-  $classpath : "examples.ajax_call.MyTemplate",
+  $classpath : "examples.jsonp_call.MyTemplate",
   $hasScript : true
 }}
 

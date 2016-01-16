@@ -1,5 +1,5 @@
 Aria.tplScriptDefinition({
-  $classpath: "examples.ajax_call.MyTemplateScript",
+  $classpath: "examples.jsonp_call.MyTemplateScript",
   $prototype: {
     doRequest: function() {
       aria.core.IO.jsonp({
