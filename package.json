@@ -1,0 +1,17 @@
+{
+  "name": "ariatemplates-examples",
+  "version": "1.0.0",
+  "description": "Aria Templates examples",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loociano/ariatemplates-examples.git"
+  },
+  "keywords": [],
+  "author": "Luciano Rubio <luciano@loociano.com>",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/loociano/ariatemplates-examples/issues"
+  },
+  "homepage": "https://github.com/loociano/ariatemplates-examples#readme"
+}
