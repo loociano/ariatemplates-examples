@@ -13,5 +13,12 @@
   "bugs": {
     "url": "https://github.com/loociano/ariatemplates-examples/issues"
   },
-  "homepage": "https://github.com/loociano/ariatemplates-examples#readme"
+  "homepage": "https://github.com/loociano/ariatemplates-examples#readme",
+  "devDependencies": {
+    "babel-cli": "^6.6.5",
+    "grunt": "^0.4.5",
+    "grunt-babel": "^6.0.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "load-grunt-tasks": "^3.4.1"
+  }
 }
