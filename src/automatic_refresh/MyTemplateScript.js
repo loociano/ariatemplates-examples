@@ -7,6 +7,7 @@ Aria.tplScriptDefinition({
      * @param {Object} team contains the team name and score
      */
     increaseCount: function(evt, team) {
+      console.log(typeof Symbol('aaa'));
       this.$json.setValue(team, "score", team.score + 1);
     }
   }
